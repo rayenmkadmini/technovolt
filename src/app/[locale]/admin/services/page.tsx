@@ -29,7 +29,7 @@ export default async function AdminServicesPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Layers className="h-6 w-6 text-[#1B3A6B]" />
+            <Layers className="h-6 w-6 text-[#0B69FF]" />
             <span>Gestion des Services (CMS Catalogue)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">

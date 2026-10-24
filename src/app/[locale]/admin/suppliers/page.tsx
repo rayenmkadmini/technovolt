@@ -24,7 +24,7 @@ export default async function AdminSuppliersPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Truck className="h-6 w-6 text-[#1B3A6B]" />
+            <Truck className="h-6 w-6 text-[#0B69FF]" />
             <span>Répertoire Fournisseurs & Partenaires Matériel</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -48,7 +48,7 @@ export default async function AdminSuppliersPage({
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Building className="h-5 w-5 text-[#1B3A6B]" />
+                  <Building className="h-5 w-5 text-[#0B69FF]" />
                   <span>{supp.name}</span>
                 </h2>
                 <div className="text-xs text-slate-500 mt-1">

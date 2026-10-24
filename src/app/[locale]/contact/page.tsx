@@ -56,7 +56,7 @@ export default async function ContactPage({
                 <div className="space-y-4">
                   {/* Phone */}
                   <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50">
-                    <div className="h-10 w-10 rounded-lg bg-[#1B3A6B]/10 flex items-center justify-center text-[#1B3A6B] shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-[#0B69FF]/10 flex items-center justify-center text-[#0B69FF] shrink-0">
                       <Phone className="h-5 w-5" />
                     </div>
                     <div>
@@ -87,7 +87,7 @@ export default async function ContactPage({
 
                   {/* Email */}
                   <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50">
-                    <div className="h-10 w-10 rounded-lg bg-[#1B3A6B]/10 flex items-center justify-center text-[#1B3A6B] shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-[#0B69FF]/10 flex items-center justify-center text-[#0B69FF] shrink-0">
                       <Mail className="h-5 w-5" />
                     </div>
                     <div>
@@ -99,7 +99,7 @@ export default async function ContactPage({
 
                   {/* Address */}
                   <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50">
-                    <div className="h-10 w-10 rounded-lg bg-[#1B3A6B]/10 flex items-center justify-center text-[#1B3A6B] shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-[#0B69FF]/10 flex items-center justify-center text-[#0B69FF] shrink-0">
                       <MapPin className="h-5 w-5" />
                     </div>
                     <div>
@@ -113,7 +113,7 @@ export default async function ContactPage({
 
                   {/* Hours */}
                   <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50">
-                    <div className="h-10 w-10 rounded-lg bg-[#1B3A6B]/10 flex items-center justify-center text-[#1B3A6B] shrink-0">
+                    <div className="h-10 w-10 rounded-lg bg-[#0B69FF]/10 flex items-center justify-center text-[#0B69FF] shrink-0">
                       <Clock className="h-5 w-5" />
                     </div>
                     <div>

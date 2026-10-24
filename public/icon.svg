@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="tvBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A1628" />
+      <stop offset="100%" stop-color="#142B50" />
+    </linearGradient>
+
+    <!-- Electric Blue Gradient -->
+    <linearGradient id="tvElectric" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#2B8CFF" />
+      <stop offset="50%" stop-color="#0E67FF" />
+      <stop offset="100%" stop-color="#0055EB" />
+    </linearGradient>
+
+    <!-- Subtle Drop Shadow -->
+    <filter id="tvShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0E67FF" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Premium Squircle Tile -->
+  <rect width="512" height="512" rx="118" fill="url(#tvBgGrad)" />
+  <rect width="500" height="500" x="6" y="6" rx="112" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4" />
+
+  <!-- Center Ambient Radial Glow -->
+  <radialGradient id="tvRadial" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#0E67FF" stop-opacity="0.3" />
+    <stop offset="100%" stop-color="#0E67FF" stop-opacity="0" />
+  </radialGradient>
+  <circle cx="256" cy="256" r="170" fill="url(#tvRadial)" />
+
+  <!-- TECHNOVOLT Electric Lightning Bolt V Symbol -->
+  <g filter="url(#tvShadow)" transform="translate(18, 12)">
+    <!-- Left diagonal arm of the V -->
+    <path 
+      d="M 128 178 L 180 178 L 246 360 L 202 360 Z" 
+      fill="url(#tvElectric)" 
+    />
+    <!-- Center connecting fill -->
+    <path
+      d="M 198 350 L 246 350 L 235 385 L 205 385 Z"
+      fill="url(#tvElectric)"
+    />
+    <!-- Right arm & Lightning bolt with downward sharp tip -->
+    <path 
+      d="M 378 98 L 324 98 L 265 242 L 316 242 L 208 435 L 248 435 L 340 286 L 290 286 Z" 
+      fill="url(#tvElectric)" 
+    />
+  </g>
+</svg>

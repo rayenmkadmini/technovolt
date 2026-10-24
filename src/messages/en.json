@@ -41,11 +41,11 @@
     "signOut": "Sign Out"
   },
   "hero": {
-    "title": "Your Expert in Electrical Solutions & Home Automation",
+    "title": "BUILDING TECH SOLUTIONS FOR A BETTER TOMORROW.",
     "subtitle": "Installation, repair and electrical maintenance for residential and commercial clients in Tataouine and surrounding areas. Quality, reliability and competitive pricing.",
     "cta": "Request a Free Quote",
     "ctaWhatsapp": "Contact Us on WhatsApp",
-    "tagline": "General Electrical | Home Automation"
+    "tagline": "IDEAS — TECH — IMPACT"
   },
   "services": {
     "title": "Our Services",
@@ -280,5 +280,34 @@
     "about": "About",
     "contact": "Contact",
     "quote": "Request a Quote"
+  },
+  "bot": {
+    "launcherLabel": "TechnoVolt Bot — AI Electrical Assistant",
+    "title": "TechnoVolt Bot",
+    "subtitle": "Electrical & Smart Home Specialist",
+    "statusOnline": "Online",
+    "welcomeMessage": "Hello! I am TechnoVolt Bot, your technical assistant specialized in residential electricity, smart home automation, electrical equipment, and pricing in Tunisia. How can I help you today?",
+    "inputPlaceholder": "Ask your question (e.g., circuit breaker, cable size, pricing...)",
+    "send": "Send",
+    "newChat": "New conversation",
+    "minimize": "Minimize",
+    "close": "Close",
+    "copy": "Copy answer",
+    "copied": "Copied!",
+    "retry": "Retry",
+    "typing": "TechnoVolt Bot is thinking...",
+    "disclaimer": "Answers are for indicative and educational purposes. Always turn off the main breaker before any inspection.",
+    "quoteCta": "Request a free TechnoVolt quote",
+    "errorNetwork": "Network error. Please try again.",
+    "errorGeneric": "An error occurred while processing your request.",
+    "characterLimit": "1000 characters max",
+    "suggestedQuestions": [
+      "How much does a circuit breaker cost in Tunisia?",
+      "What is the difference between an MCB and an RCD?",
+      "How to estimate an appliance's power consumption?",
+      "How to choose a smart switch?",
+      "Which smart home system is best for a house?",
+      "Why does my circuit breaker keep tripping?"
+    ]
   }
 }

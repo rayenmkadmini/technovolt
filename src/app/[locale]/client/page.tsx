@@ -109,7 +109,7 @@ export default function ClientDashboardPage() {
         {/* Welcome Header */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-2xl bg-[#1B3A6B] text-white flex items-center justify-center font-bold text-2xl shadow-md">
+            <div className="h-16 w-16 rounded-2xl bg-[#0B69FF] text-white flex items-center justify-center font-bold text-2xl shadow-md">
               <User className="h-8 w-8 text-[#F5A623]" />
             </div>
             <div className="space-y-1">
@@ -155,7 +155,7 @@ export default function ClientDashboardPage() {
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 {t("myQuotes")}
               </span>
-              <FileText className="h-5 w-5 text-[#1B3A6B]" />
+              <FileText className="h-5 w-5 text-[#0B69FF]" />
             </div>
             <div className="text-3xl font-extrabold text-slate-900">2</div>
             <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
@@ -193,10 +193,10 @@ export default function ClientDashboardPage() {
           <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[#1B3A6B]" />
+                <FileText className="h-4 w-4 text-[#0B69FF]" />
                 <span>{t("myQuotes")}</span>
               </h2>
-              <Link href="/quote" className="text-xs font-bold text-[#1B3A6B] hover:underline">
+              <Link href="/quote" className="text-xs font-bold text-[#0B69FF] hover:underline">
                 + Nouveau devis
               </Link>
             </div>
@@ -215,7 +215,7 @@ export default function ClientDashboardPage() {
                     <p className="text-xs text-slate-600 font-medium">{q.service}</p>
                   </div>
                   <div className="text-end space-y-1">
-                    <div className="text-xs font-bold text-[#1B3A6B]">{q.amount}</div>
+                    <div className="text-xs font-bold text-[#0B69FF]">{q.amount}</div>
                     <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">
                       {q.statusLabel}
                     </span>
@@ -255,7 +255,7 @@ export default function ClientDashboardPage() {
             </div>
 
             {/* Direct Support Card */}
-            <div className="bg-gradient-to-br from-[#1B3A6B] to-[#122442] text-white rounded-3xl p-6 space-y-4 shadow-md">
+            <div className="bg-gradient-to-br from-[#0B69FF] to-[#0848B8] text-white rounded-3xl p-6 space-y-4 shadow-md">
               <div className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-[#F5A623]" />
                 <h3 className="font-bold text-sm">Assistance Technique Directe</h3>

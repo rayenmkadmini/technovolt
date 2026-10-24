@@ -67,7 +67,7 @@ export default async function AdminExpensesPage({
             <tbody className="divide-y divide-slate-100">
               {initialExpenses.map((exp) => (
                 <tr key={exp.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-4 py-4 font-mono font-bold text-[#1B3A6B]">
+                  <td className="px-4 py-4 font-mono font-bold text-[#0B69FF]">
                     {exp.reference}
                   </td>
 

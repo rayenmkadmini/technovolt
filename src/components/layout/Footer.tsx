@@ -1,24 +1,23 @@
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import {
   Phone,
   Mail,
   MapPin,
   Clock,
-  ShieldAlert,
   ArrowUpRight,
   Zap,
+  MessageSquare,
 } from "lucide-react";
 
 export function Footer() {
   const t = useTranslations("footer");
   const tNav = useTranslations("nav");
   const tServices = useTranslations("services.categories");
-  const locale = useLocale();
 
   return (
-    <footer className="bg-[#0F1D33] text-slate-300 pt-16 pb-12 border-t border-slate-800">
+    <footer suppressHydrationWarning className="bg-[#0F1D33] text-slate-300 pt-16 pb-12 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Col 1: Identity & Brand */}
@@ -145,11 +144,33 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone className="h-4 w-4 text-[#F5A623] shrink-0" />
-                <span>Disponible pour dépannages & devis</span>
+                <a
+                  href="tel:+21626250027"
+                  className="hover:text-[#F5A623] font-semibold transition-colors"
+                  dir="ltr"
+                >
+                  +216 26 250 027
+                </a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <MessageSquare className="h-4 w-4 text-emerald-400 shrink-0" />
+                <a
+                  href="https://wa.me/21626250027?text=Bonjour%20TECHNOVOLT"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-300 transition-colors"
+                >
+                  WhatsApp: +216 26 250 027
+                </a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="h-4 w-4 text-[#F5A623] shrink-0" />
-                <span>contact@technovolt.tn</span>
+                <a
+                  href="mailto:contact@technovolt.tn"
+                  className="hover:text-white transition-colors"
+                >
+                  contact@technovolt.tn
+                </a>
               </li>
             </ul>
           </div>
@@ -161,14 +182,14 @@ export function Footer() {
             &copy; {new Date().getFullYear()} TECHNOVOLT. {t("allRights")}
           </p>
           <div className="flex items-center gap-6">
-            <Link href="/about#privacy" className="hover:text-slate-200 transition-colors">
+            <Link href="/about" className="hover:text-slate-200 transition-colors">
               {t("privacy")}
             </Link>
-            <Link href="/about#terms" className="hover:text-slate-200 transition-colors">
+            <Link href="/about" className="hover:text-slate-200 transition-colors">
               {t("terms")}
             </Link>
-            <Link href="/admin" className="text-slate-400 hover:text-[#F5A623] transition-colors">
-              Portail Admin
+            <Link href="/admin/login" className="text-slate-400 hover:text-[#F5A623] transition-colors">
+              Portail Collaborateurs
             </Link>
           </div>
         </div>

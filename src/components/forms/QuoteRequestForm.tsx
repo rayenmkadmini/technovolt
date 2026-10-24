@@ -93,7 +93,7 @@ export function QuoteRequestForm({
           <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider block">
             {tSuccess("reference")}
           </span>
-          <span className="text-2xl font-black text-[#1B3A6B] font-mono">
+          <span className="text-2xl font-black text-[#0B69FF] font-mono">
             {successRef}
           </span>
         </div>
@@ -138,7 +138,7 @@ export function QuoteRequestForm({
 
         <div className="space-y-4">
           <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-            <span className="h-6 w-6 rounded-full bg-[#1B3A6B] text-white text-xs flex items-center justify-center">
+            <span className="h-6 w-6 rounded-full bg-[#0B69FF] text-white text-xs flex items-center justify-center">
               1
             </span>
             <span>Vos Coordonnées</span>
@@ -198,7 +198,7 @@ export function QuoteRequestForm({
 
         <div className="space-y-4">
           <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-            <span className="h-6 w-6 rounded-full bg-[#1B3A6B] text-white text-xs flex items-center justify-center">
+            <span className="h-6 w-6 rounded-full bg-[#0B69FF] text-white text-xs flex items-center justify-center">
               2
             </span>
             <span>Votre Projet ou Panne</span>
@@ -209,7 +209,7 @@ export function QuoteRequestForm({
               {t("service")} *
             </label>
             <select
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
               value={formData.serviceId}
               onChange={(e) => setFormData({ ...formData, serviceId: e.target.value })}
             >
@@ -238,7 +238,7 @@ export function QuoteRequestForm({
 
         <div className="space-y-4">
           <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
-            <span className="h-6 w-6 rounded-full bg-[#1B3A6B] text-white text-xs flex items-center justify-center">
+            <span className="h-6 w-6 rounded-full bg-[#0B69FF] text-white text-xs flex items-center justify-center">
               3
             </span>
             <span>Préférence de Rendez-vous</span>
@@ -260,7 +260,7 @@ export function QuoteRequestForm({
                 {t("preferredTime")}
               </label>
               <select
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
                 value={formData.preferredTime}
                 onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
               >

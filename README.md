@@ -45,7 +45,7 @@ Ce n'est pas une simple vitrine statique : c'est un véritable progiciel de gest
 
 - **Framework Web** : [Next.js 16](https://nextjs.org/) (App Router, Server Components & Static Site Generation)
 - **Langage** : TypeScript avec typage strict
-- **Design & Styles** : Tailwind CSS v4, tokens de marque TECHNOVOLT (Bleu Marine `#1B3A6B`, Or Électrique `#F5A623`)
+- **Design & Styles** : Tailwind CSS v4, tokens de marque TECHNOVOLT (Bleu Marine `#0B69FF`, Or Électrique `#F5A623`)
 - **Composants d'Interface** : Composants accessibles inspirés de shadcn/ui, icônes Lucide React
 - **Internationalisation** : `next-intl` avec routage dynamique et préservation du chemin lors du changement de langue
 - **Base de Données & Auth** : Supabase PostgreSQL avec Row Level Security (RLS) sur toutes les tables

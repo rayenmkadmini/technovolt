@@ -39,16 +39,12 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
 
   const isLoginPage = pathname.includes("/admin/login");
 
   useEffect(() => {
-    if (isLoginPage) {
-      setAuthorized(true);
-      return;
-    }
+    if (isLoginPage) return;
 
     const checkAdminAuth = async () => {
       try {
@@ -70,7 +66,6 @@ export default function AdminLayout({
 
         if (profile && ["super_admin", "owner", "admin", "manager"].includes(profile.role)) {
           setAdminUser({ ...user, profile });
-          setAuthorized(true);
         } else {
           router.push("/admin/login");
         }
@@ -91,16 +86,6 @@ export default function AdminLayout({
   // If on login page, render page directly without administrative chrome
   if (isLoginPage) {
     return <>{children}</>;
-  }
-
-  // Loading gate
-  if (authorized === null) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
-        <Loader2 className="h-8 w-8 animate-spin text-[#F5A623]" />
-        <p className="text-sm font-medium text-slate-300">Vérification des accréditations administratives...</p>
-      </div>
-    );
   }
 
   const menuSections = [
@@ -157,7 +142,7 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-100 flex flex-col" suppressHydrationWarning>
       {/* Top Bar for Admin */}
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-xs">
         <div className="flex items-center gap-3">
@@ -182,7 +167,7 @@ export default function AdminLayout({
                 className="object-contain object-start"
               />
             </div>
-            <span className="hidden sm:inline-block rounded bg-[#1B3A6B] px-2 py-0.5 text-xs font-bold text-white">
+            <span className="hidden sm:inline-block rounded bg-[#0B69FF] px-2 py-0.5 text-xs font-bold text-white">
               ADMINISTRATION
             </span>
           </Link>
@@ -200,11 +185,11 @@ export default function AdminLayout({
             <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
           </Link>
 
-          <div className="flex items-center gap-3 border-s border-slate-200 ps-4">
-            <div className="h-8 w-8 rounded-full bg-[#1B3A6B] text-white flex items-center justify-center text-xs font-bold">
+          <div className="flex items-center gap-3 border-s border-slate-200 ps-4" suppressHydrationWarning>
+            <div className="h-8 w-8 rounded-full bg-[#0B69FF] text-white flex items-center justify-center text-xs font-bold" suppressHydrationWarning>
               {adminUser?.profile?.full_name?.slice(0, 2).toUpperCase() || "TV"}
             </div>
-            <div className="hidden md:block text-start">
+            <div className="hidden md:block text-start" suppressHydrationWarning>
               <div className="text-xs font-bold text-slate-900 truncate max-w-[120px]">
                 {adminUser?.profile?.full_name || "Admin"}
               </div>
@@ -244,7 +229,7 @@ export default function AdminLayout({
                       href={item.href}
                       className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                         active
-                          ? "bg-[#1B3A6B] text-white shadow-xs font-semibold"
+                          ? "bg-[#0B69FF] text-white shadow-xs font-semibold"
                           : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
@@ -312,7 +297,7 @@ export default function AdminLayout({
                         onClick={() => setSidebarOpen(false)}
                         className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                           active
-                            ? "bg-[#1B3A6B] text-white shadow-xs font-semibold"
+                            ? "bg-[#0B69FF] text-white shadow-xs font-semibold"
                             : "text-slate-600 hover:bg-slate-100"
                         }`}
                       >

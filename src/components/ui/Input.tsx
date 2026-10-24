@@ -9,7 +9,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
+          "flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B69FF] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
           className
         )}
         ref={ref}
@@ -27,7 +27,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         className={cn(
-          "flex min-h-[100px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
+          "flex min-h-[100px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B69FF] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
           className
         )}
         ref={ref}
@@ -48,7 +48,7 @@ export function Badge({
   children: React.ReactNode;
 }) {
   const variants = {
-    default: "bg-[#1B3A6B] text-white",
+    default: "bg-[#0B69FF] text-white",
     secondary: "bg-[#F5A623]/20 text-[#B87508] border border-[#F5A623]/30",
     outline: "border border-slate-300 text-slate-700 bg-white",
     success: "bg-emerald-50 text-emerald-700 border border-emerald-200",

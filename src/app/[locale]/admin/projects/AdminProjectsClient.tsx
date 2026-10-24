@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -38,24 +38,27 @@ interface AdminProjectsClientProps {
 const STORAGE_KEY = "technovolt_admin_projects";
 
 export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProps) {
-  const [projects, setProjects] = useState<ProjectItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {
-        // Fallback
-      }
-    }
-    return initialProjects;
-  });
+  // Always initialize with initialProjects for 100% server/client hydration consistency
+  const [projects, setProjects] = useState<ProjectItem[]>(initialProjects);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+  // Load from localStorage safely after mount to prevent SSR hydration mismatch
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTimeout(() => {
+            setProjects(parsed);
+          }, 0);
+        }
+      }
+    } catch {
+      // Fallback to initial
+    }
+  }, []);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -200,7 +203,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-5 end-5 z-50 bg-[#1B3A6B] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-5 end-5 z-50 bg-[#0B69FF] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold animate-in fade-in slide-in-from-bottom-2">
           <Check className="h-4 w-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
@@ -210,7 +213,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <ImageIcon className="h-6 w-6 text-[#1B3A6B]" />
+            <ImageIcon className="h-6 w-6 text-[#0B69FF]" />
             <span>Gestion des Projets & Portfolio (CRUD)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -233,7 +236,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
             variant="default"
             size="sm"
             onClick={handleOpenAdd}
-            className="gap-1.5 font-bold text-xs bg-[#1B3A6B] hover:bg-[#122442] shadow-sm"
+            className="gap-1.5 font-bold text-xs bg-[#0B69FF] hover:bg-[#0848B8] shadow-sm"
           >
             <Plus className="h-4 w-4" />
             <span>Ajouter un Projet</span>
@@ -260,7 +263,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
               onClick={() => setSelectedCategory(c.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 selectedCategory === c.id
-                  ? "bg-[#1B3A6B] text-white"
+                  ? "bg-[#0B69FF] text-white"
                   : "bg-slate-100 hover:bg-slate-200 text-slate-700"
               }`}
             >
@@ -287,7 +290,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-3 start-3">
-                  <span className="inline-block px-2.5 py-1 rounded bg-[#1B3A6B]/90 text-white text-[11px] font-semibold backdrop-blur-md">
+                  <span className="inline-block px-2.5 py-1 rounded bg-[#0B69FF]/90 text-white text-[11px] font-semibold backdrop-blur-md">
                     {proj.category}
                   </span>
                 </div>
@@ -315,7 +318,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   )}
                 </div>
 
-                <h3 className="text-base font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors line-clamp-1">
+                <h3 className="text-base font-bold text-slate-900 group-hover:text-[#0B69FF] transition-colors line-clamp-1">
                   {proj.title}
                 </h3>
 
@@ -333,7 +336,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   variant="outline"
                   size="sm"
                   onClick={() => handleOpenEdit(proj)}
-                  className="h-8 px-2.5 text-xs text-slate-700 hover:text-[#1B3A6B] gap-1"
+                  className="h-8 px-2.5 text-xs text-slate-700 hover:text-[#0B69FF] gap-1"
                 >
                   <Edit className="h-3.5 w-3.5" />
                   <span>Modifier</span>
@@ -372,12 +375,12 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 {editingProject ? (
                   <>
-                    <Edit className="h-5 w-5 text-[#1B3A6B]" />
+                    <Edit className="h-5 w-5 text-[#0B69FF]" />
                     <span>Modifier le Projet</span>
                   </>
                 ) : (
                   <>
-                    <Plus className="h-5 w-5 text-[#1B3A6B]" />
+                    <Plus className="h-5 w-5 text-[#0B69FF]" />
                     <span>Ajouter un Nouveau Projet</span>
                   </>
                 )}
@@ -412,7 +415,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#1B3A6B]"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0B69FF]"
                   >
                     <option value="Électricité Générale">Électricité Générale</option>
                     <option value="Tableaux & Armoires">Tableaux & Armoires</option>
@@ -458,7 +461,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
                   placeholder="Précisez les travaux réalisés, le type d'installation et les équipements installés..."
-                  className="w-full p-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#1B3A6B]"
+                  className="w-full p-3 rounded-lg border border-slate-200 text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-[#0B69FF]"
                 />
               </div>
 
@@ -471,7 +474,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   <button
                     type="button"
                     onClick={() => setIsPhotoPickerOpen(true)}
-                    className="text-xs font-bold text-[#1B3A6B] hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-[#0B69FF] hover:underline flex items-center gap-1"
                   >
                     <ImageIcon className="h-3.5 w-3.5" />
                     <span>Choisir parmi les 74 chantiers</span>
@@ -502,7 +505,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   id="featured-check"
                   checked={formIsFeatured}
                   onChange={(e) => setFormIsFeatured(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-[#1B3A6B] focus:ring-[#1B3A6B]"
+                  className="h-4 w-4 rounded border-slate-300 text-[#0B69FF] focus:ring-[#0B69FF]"
                 />
                 <label htmlFor="featured-check" className="text-xs text-slate-700 font-medium cursor-pointer">
                   Mettre en vedette sur la page d'accueil et le portfolio
@@ -521,7 +524,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                 <Button
                   type="submit"
                   variant="default"
-                  className="text-xs font-bold bg-[#1B3A6B] hover:bg-[#122442]"
+                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#0848B8]"
                 >
                   {editingProject ? "Enregistrer les modifications" : "Ajouter le projet"}
                 </Button>
@@ -538,7 +541,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
             <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h4 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-[#1B3A6B]" />
+                  <Layers className="h-5 w-5 text-[#0B69FF]" />
                   <span>Sélectionner une photo parmi les 74 chantiers réels</span>
                 </h4>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -564,7 +567,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                   }}
                   className={`group relative aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${
                     formCoverImage === photo.src
-                      ? "border-[#1B3A6B] ring-2 ring-[#1B3A6B]/30"
+                      ? "border-[#0B69FF] ring-2 ring-[#0B69FF]/30"
                       : "border-slate-200 hover:border-slate-400"
                   }`}
                 >
@@ -579,7 +582,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                     Choisir
                   </div>
                   {formCoverImage === photo.src && (
-                    <div className="absolute top-1 end-1 p-1 rounded-full bg-[#1B3A6B] text-white">
+                    <div className="absolute top-1 end-1 p-1 rounded-full bg-[#0B69FF] text-white">
                       <Check className="h-3 w-3" />
                     </div>
                   )}

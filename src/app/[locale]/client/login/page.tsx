@@ -146,7 +146,7 @@ export default function ClientLoginPage() {
                 disabled={loading}
                 variant="default"
                 size="lg"
-                className="w-full gap-2 font-bold bg-[#1B3A6B] hover:bg-[#152D54]"
+                className="w-full gap-2 font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
               >
                 {loading ? (
                   <>
@@ -168,7 +168,7 @@ export default function ClientLoginPage() {
               {t("noAccount")}{" "}
               <Link
                 href="/client/register"
-                className="font-bold text-[#1B3A6B] hover:text-[#F5A623] transition-colors underline"
+                className="font-bold text-[#0B69FF] hover:text-[#F5A623] transition-colors underline"
               >
                 {t("signUpLink")}
               </Link>

@@ -68,7 +68,7 @@ export default async function ServicesPage({
                   />
                   <div className="absolute top-3 end-3">
                     {service.show_price && service.price_from ? (
-                      <span className="inline-flex items-center rounded-lg bg-[#1B3A6B] px-3 py-1 text-xs font-semibold text-white shadow-md">
+                      <span className="inline-flex items-center rounded-lg bg-[#0B69FF] px-3 py-1 text-xs font-semibold text-white shadow-md">
                         {t("startingFrom")}{" "}
                         {formatCurrency(service.price_from, locale)}
                       </span>
@@ -82,7 +82,7 @@ export default async function ServicesPage({
 
                 <CardContent className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-3">
-                    <h2 className="text-xl font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors">
+                    <h2 className="text-xl font-bold text-slate-900 group-hover:text-[#0B69FF] transition-colors">
                       {service.title}
                     </h2>
 
@@ -108,7 +108,7 @@ export default async function ServicesPage({
                   <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
                     <Link
                       href={`/services/${service.slug}`}
-                      className="text-sm font-semibold text-[#1B3A6B] hover:text-[#0F2342] inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                      className="text-sm font-semibold text-[#0B69FF] hover:text-[#0F2342] inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                     >
                       <span>{t("learnMore")}</span>
                       <ChevronRight className="h-4 w-4" />

@@ -10,7 +10,7 @@ import {
 } from "recharts";
 
 const data = [
-  { name: "Matériel & Câblage", value: 1450, color: "#1B3A6B" },
+  { name: "Matériel & Câblage", value: 1450, color: "#0B69FF" },
   { name: "Outillage & Sécurité", value: 320, color: "#F5A623" },
   { name: "Carburant & Transport", value: 160, color: "#10B981" },
   { name: "Fournitures Diverses", value: 120, color: "#6366F1" },

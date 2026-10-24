@@ -49,7 +49,7 @@ export default async function AdminReportsPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <BarChart3 className="h-6 w-6 text-[#1B3A6B]" />
+            <BarChart3 className="h-6 w-6 text-[#0B69FF]" />
             <span>Rapports Financiers & Compte de Résultat</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -138,7 +138,7 @@ export default async function AdminReportsPage({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-[#1B3A6B]">
+            <div className="text-2xl font-black text-[#0B69FF]">
               {formatCurrency(operatingProfit, locale)}
             </div>
             <p className="text-[11px] text-blue-700 mt-1">Encaissé &minus; Dépenses payées</p>
@@ -176,7 +176,7 @@ export default async function AdminReportsPage({
                   </div>
                   <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                     <div
-                      className="h-full bg-[#1B3A6B] rounded-full"
+                      className="h-full bg-[#0B69FF] rounded-full"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

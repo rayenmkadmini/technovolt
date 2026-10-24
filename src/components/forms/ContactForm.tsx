@@ -140,7 +140,7 @@ export function ContactForm({ locale }: { locale: string }) {
               {t("service")}
             </label>
             <select
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
               value={formData.service}
               onChange={(e) => setFormData({ ...formData, service: e.target.value })}
             >

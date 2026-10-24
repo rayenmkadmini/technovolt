@@ -54,14 +54,14 @@ export default async function HomePage({
   )}`;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen" suppressHydrationWarning>
       <Header />
 
       <main className="flex-1">
         {/* ================================================================= */}
         {/* 1. HERO SECTION */}
         {/* ================================================================= */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-[#122442] to-[#1B3A6B] text-white pt-12 pb-20 lg:pt-20 lg:pb-32">
+        <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-[#0848B8] to-[#0B69FF] text-white pt-12 pb-20 lg:pt-20 lg:pb-32">
           {/* Decorative ambient background glows */}
           <div className="absolute top-0 start-1/4 -translate-y-1/2 w-96 h-96 bg-[#F5A623]/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 end-10 translate-y-1/3 w-[30rem] h-[30rem] bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -160,6 +160,7 @@ export default async function HomePage({
                       alt="TECHNOVOLT Électricité générale et domotique"
                       fill
                       priority
+                      sizes="(max-width: 1024px) 100vw, 480px"
                       className="object-cover"
                     />
                     {/* Floating Brand Logo Badge */}
@@ -169,6 +170,7 @@ export default async function HomePage({
                           src="/logo.png"
                           alt="TECHNOVOLT"
                           fill
+                          sizes="128px"
                           className="object-contain"
                           priority
                         />
@@ -212,7 +214,7 @@ export default async function HomePage({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="space-y-3 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1B3A6B]/10 text-[#1B3A6B] text-xs font-bold">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0B69FF]/10 text-[#0B69FF] text-xs font-bold">
                   <Zap className="h-3.5 w-3.5 text-[#F5A623]" />
                   <span>{tServices("title")}</span>
                 </div>
@@ -250,7 +252,7 @@ export default async function HomePage({
                     className="object-cover"
                   />
                   <div className="absolute top-4 start-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#1B3A6B]/95 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-white shadow-md">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B69FF]/95 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-white shadow-md">
                       <ShieldCheck className="h-4 w-4 text-[#F5A623]" />
                       <span>{locale === "ar" ? "الخدمة المركزية" : "Service Majeur"}</span>
                     </span>
@@ -265,7 +267,7 @@ export default async function HomePage({
                 <div className="lg:col-span-6 p-8 sm:p-10 flex flex-col justify-between space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between text-xs text-slate-500">
-                      <span className="font-semibold uppercase tracking-wider text-[#1B3A6B]">
+                      <span className="font-semibold uppercase tracking-wider text-[#0B69FF]">
                         Génie Électrique Résidentiel & Tertiaire
                       </span>
                       {services[0].estimated_duration && (
@@ -302,7 +304,7 @@ export default async function HomePage({
                   <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                     <div>
                       <div className="text-xs text-slate-500">Tarification</div>
-                      <div className="text-lg font-extrabold text-[#1B3A6B]">
+                      <div className="text-lg font-extrabold text-[#0B69FF]">
                         {services[0].show_price && services[0].price_from
                           ? `${tServices("startingFrom")} ${formatCurrency(services[0].price_from, locale)}`
                           : "Devis Gratuit & Personnalisé"}
@@ -332,7 +334,7 @@ export default async function HomePage({
               {services.slice(1).map((service) => (
                 <div
                   key={service.id}
-                  className="group rounded-2xl bg-white border border-slate-200 p-6 flex flex-col justify-between hover:border-[#1B3A6B]/40 hover:shadow-lg transition-all duration-300 space-y-5"
+                  className="group rounded-2xl bg-white border border-slate-200 p-6 flex flex-col justify-between hover:border-[#0B69FF]/40 hover:shadow-lg transition-all duration-300 space-y-5"
                 >
                   <div className="space-y-4">
                     <div
@@ -348,7 +350,7 @@ export default async function HomePage({
                       />
                       <div className="absolute top-3 end-3">
                         {service.show_price && service.price_from ? (
-                          <span className="inline-block rounded-md bg-[#1B3A6B] px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+                          <span className="inline-block rounded-md bg-[#0B69FF] px-2.5 py-1 text-xs font-bold text-white shadow-sm">
                             {tServices("startingFrom")} {formatCurrency(service.price_from, locale)}
                           </span>
                         ) : (
@@ -360,7 +362,7 @@ export default async function HomePage({
                     </div>
 
                     <div className="space-y-2">
-                      <h4 className="text-lg font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors">
+                      <h4 className="text-lg font-bold text-slate-900 group-hover:text-[#0B69FF] transition-colors">
                         {service.title}
                       </h4>
                       <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
@@ -372,14 +374,14 @@ export default async function HomePage({
                   <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                     <Link
                       href={`/services/${service.slug}`}
-                      className="text-xs font-bold text-[#1B3A6B] inline-flex items-center gap-1 hover:underline"
+                      className="text-xs font-bold text-[#0B69FF] inline-flex items-center gap-1 hover:underline"
                     >
                       <span>{tServices("learnMore")}</span>
                       <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
 
                     <Link href={`/quote?service=${service.id}`}>
-                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-slate-700 hover:text-[#1B3A6B]">
+                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-slate-700 hover:text-[#0B69FF]">
                         {tServices("requestQuote")}
                       </Button>
                     </Link>
@@ -415,12 +417,12 @@ export default async function HomePage({
 
                 {/* Local Stats Box */}
                 <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#1B3A6B]">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#0B69FF]">
                     {locale === "ar" ? "التزامنا المحلي بتطاوين" : "Nos Engagements Locaux à Tataouine"}
                   </h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="text-2xl font-black text-[#1B3A6B]">6j / 7</div>
+                      <div className="text-2xl font-black text-[#0B69FF]">6j / 7</div>
                       <div className="text-xs text-slate-500 font-medium">Disponibilité terrain</div>
                     </div>
                     <div>
@@ -443,7 +445,7 @@ export default async function HomePage({
               {/* Right Column: 4 Technical Pillars Grid */}
               <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all space-y-3">
-                  <div className="h-11 w-11 rounded-xl bg-[#1B3A6B]/10 flex items-center justify-center text-[#1B3A6B]">
+                  <div className="h-11 w-11 rounded-xl bg-[#0B69FF]/10 flex items-center justify-center text-[#0B69FF]">
                     <ShieldCheck className="h-5 w-5" />
                   </div>
                   <h3 className="text-base font-bold text-slate-900">
@@ -560,7 +562,7 @@ export default async function HomePage({
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-4 start-4">
-                      <span className="inline-flex items-center rounded-md bg-[#1B3A6B]/90 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white">
+                      <span className="inline-flex items-center rounded-md bg-[#0B69FF]/90 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white">
                         {proj.category}
                       </span>
                     </div>
@@ -577,7 +579,7 @@ export default async function HomePage({
                       )}
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors">
+                    <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#0B69FF] transition-colors">
                       {proj.title}
                     </h3>
 
@@ -590,7 +592,7 @@ export default async function HomePage({
             </div>
 
             {/* Worksite Photos Gallery Strip */}
-            <div className="mt-12 rounded-2xl bg-[#1B3A6B] text-white p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
+            <div className="mt-12 rounded-2xl bg-[#0B69FF] text-white p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
               <div className="space-y-2 text-center md:text-start">
                 <span className="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#F5A623] text-slate-900">
                   {locale === "ar" ? "معرض الصور الكامل" : "74 Photos de Chantiers Réels"}
@@ -724,7 +726,7 @@ export default async function HomePage({
               ].map((faq, idx) => (
                 <div
                   key={idx}
-                  className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs hover:border-[#1B3A6B]/30 transition-colors"
+                  className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs hover:border-[#0B69FF]/30 transition-colors"
                 >
                   <h3 className="text-base font-bold text-slate-900 flex items-start gap-3">
                     <HelpCircle className="h-5 w-5 text-[#F5A623] shrink-0 mt-0.5" />
@@ -742,7 +744,7 @@ export default async function HomePage({
         {/* ================================================================= */}
         {/* 7. FINAL CALL TO ACTION BANNER */}
         {/* ================================================================= */}
-        <section className="py-20 bg-gradient-to-r from-[#1B3A6B] via-[#152D54] to-[#0A1526] text-white relative overflow-hidden">
+        <section className="py-20 bg-gradient-to-r from-[#0B69FF] via-[#094FC9] to-[#063A9B] text-white relative overflow-hidden">
           <div className="absolute top-0 end-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-[#F5A623]/20 rounded-full blur-3xl pointer-events-none" />
 
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-6">

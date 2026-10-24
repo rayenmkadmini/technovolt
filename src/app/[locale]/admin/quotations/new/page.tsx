@@ -164,7 +164,7 @@ export default function NewQuotationPage() {
         {/* Document Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-slate-200 pb-8">
           <div>
-            <div className="text-2xl font-black text-[#1B3A6B] tracking-tight">
+            <div className="text-2xl font-black text-[#0B69FF] tracking-tight">
               TECHNOVOLT
             </div>
             <div className="text-xs font-semibold text-[#F5A623] uppercase tracking-wider">
@@ -179,7 +179,7 @@ export default function NewQuotationPage() {
           </div>
 
           <div className="text-start sm:text-end space-y-1">
-            <span className="inline-block px-3 py-1 rounded bg-[#1B3A6B] text-white font-mono text-sm font-bold">
+            <span className="inline-block px-3 py-1 rounded bg-[#0B69FF] text-white font-mono text-sm font-bold">
               DEVIS N° {quotationNumber}
             </span>
             <div className="text-xs text-slate-600 pt-2 space-y-1">
@@ -381,7 +381,7 @@ export default function NewQuotationPage() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between text-slate-900 font-black text-sm border-t-2 border-slate-300 pt-2 text-[#1B3A6B]">
+            <div className="flex items-center justify-between text-slate-900 font-black text-sm border-t-2 border-slate-300 pt-2 text-[#0B69FF]">
               <span>NET À PAYER TTC :</span>
               <span className="text-base font-mono">
                 {formatCurrency(totalTTC, "fr")}

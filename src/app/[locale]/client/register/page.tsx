@@ -278,7 +278,7 @@ export default function ClientRegisterPage() {
               {t("alreadyHaveAccount")}{" "}
               <Link
                 href="/client/login"
-                className="font-bold text-[#1B3A6B] hover:text-[#F5A623] transition-colors underline"
+                className="font-bold text-[#0B69FF] hover:text-[#F5A623] transition-colors underline"
               >
                 {t("signInLink")}
               </Link>

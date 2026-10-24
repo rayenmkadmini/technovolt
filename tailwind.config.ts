@@ -20,10 +20,10 @@ const config: Config = {
             300: "#718EC2",
             400: "#4E73B3",
             500: "#2B58A4",
-            600: "#1B3A6B", // Primary brand navy
-            700: "#152D54",
+            600: "#0B69FF", // Primary brand navy
+            700: "#094FC9",
             800: "#10213D",
-            900: "#0A1526",
+            900: "#063A9B",
           },
           gold: {
             50: "#FFF8E7",
@@ -81,8 +81,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "Noto Sans Arabic", "system-ui", "sans-serif"],
-        heading: ["Inter", "Noto Sans Arabic", "system-ui", "sans-serif"],
+        sans: ["Montserrat", "Noto Sans Arabic", "system-ui", "sans-serif"],
+        heading: ["Montserrat", "Noto Sans Arabic", "system-ui", "sans-serif"],
         arabic: ["Noto Sans Arabic", "Tahoma", "Arial", "sans-serif"],
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },

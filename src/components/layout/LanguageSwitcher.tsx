@@ -40,10 +40,10 @@ export function LanguageSwitcher() {
     <div className="relative inline-block text-start" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] transition-all"
+        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF] transition-all"
         aria-label="Sélectionner la langue / Select language / تغيير اللغة"
       >
-        <Globe className="h-3.5 w-3.5 text-[#1B3A6B]" />
+        <Globe className="h-3.5 w-3.5 text-[#0B69FF]" />
         <span>{currentLang.label}</span>
         <ChevronDown className="h-3 w-3 text-slate-400" />
       </button>
@@ -58,11 +58,11 @@ export function LanguageSwitcher() {
             >
               <span className="flex items-center gap-2">
                 <span>{lang.flag}</span>
-                <span className={lang.code === locale ? "font-semibold text-[#1B3A6B]" : ""}>
+                <span className={lang.code === locale ? "font-semibold text-[#0B69FF]" : ""}>
                   {lang.label}
                 </span>
               </span>
-              {lang.code === locale && <Check className="h-3.5 w-3.5 text-[#1B3A6B]" />}
+              {lang.code === locale && <Check className="h-3.5 w-3.5 text-[#0B69FF]" />}
             </button>
           ))}
         </div>

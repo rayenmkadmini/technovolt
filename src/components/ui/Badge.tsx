@@ -11,7 +11,7 @@ export function Badge({
   children: React.ReactNode;
 }) {
   const variants = {
-    default: "bg-[#1B3A6B] text-white",
+    default: "bg-[#0B69FF] text-white",
     secondary: "bg-[#F5A623] text-slate-900 font-bold",
     outline: "border border-slate-300 text-slate-700 bg-white",
     success: "bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold",

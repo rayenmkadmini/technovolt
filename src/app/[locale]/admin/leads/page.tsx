@@ -31,7 +31,7 @@ export default async function AdminLeadsPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Inbox className="h-6 w-6 text-[#1B3A6B]" />
+            <Inbox className="h-6 w-6 text-[#0B69FF]" />
             <span>Gestion des Demandes & Prospects (Leads CRM)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -53,7 +53,7 @@ export default async function AdminLeadsPage({
           <input
             type="text"
             placeholder="Rechercher par nom, téléphone..."
-            className="w-full ps-9 pe-4 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+            className="w-full ps-9 pe-4 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
           />
         </div>
 
@@ -85,7 +85,7 @@ export default async function AdminLeadsPage({
             <tbody className="divide-y divide-slate-100">
               {initialLeads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-4 py-4 font-mono font-bold text-[#1B3A6B]">
+                  <td className="px-4 py-4 font-mono font-bold text-[#0B69FF]">
                     <div>{lead.reference_number}</div>
                     <div className="text-[10px] text-slate-400 font-sans font-normal mt-0.5">
                       {formatDate(lead.created_at, locale)}

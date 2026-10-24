@@ -8,7 +8,7 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 216 60% 26%; /* #1B3A6B - Deep Navy */
+    --primary: 216 60% 26%; /* #0B69FF - Deep Navy */
     --primary-foreground: 210 40% 98%;
     --secondary: 37 91% 55%; /* #F5A623 - Electric Gold */
     --secondary-foreground: 222 47% 11%;
@@ -60,7 +60,7 @@
 
 /* Custom electric accent utilities */
 .brand-gradient {
-  background: linear-gradient(135deg, #1B3A6B 0%, #0F2342 100%);
+  background: linear-gradient(135deg, #0B69FF 0%, #0F2342 100%);
 }
 
 .electric-glow {

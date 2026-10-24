@@ -59,7 +59,7 @@ export function RevenueExpenseChart() {
           <Bar
             name="Chiffre d'Affaires (TND)"
             dataKey="revenue"
-            fill="#1B3A6B"
+            fill="#0B69FF"
             radius={[4, 4, 0, 0]}
           />
           <Bar

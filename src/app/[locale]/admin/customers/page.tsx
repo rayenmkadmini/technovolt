@@ -29,7 +29,7 @@ export default async function AdminCustomersPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Users className="h-6 w-6 text-[#1B3A6B]" />
+            <Users className="h-6 w-6 text-[#0B69FF]" />
             <span>Fichier Clients (CRM)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -78,7 +78,7 @@ export default async function AdminCustomersPage({
             <tbody className="divide-y divide-slate-100">
               {initialCustomers.map((cust) => (
                 <tr key={cust.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-4 py-4 font-mono font-bold text-[#1B3A6B]">
+                  <td className="px-4 py-4 font-mono font-bold text-[#0B69FF]">
                     {cust.reference_number}
                   </td>
 

@@ -74,7 +74,7 @@ export default function AdminSeoPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Globe className="h-6 w-6 text-[#1B3A6B]" />
+            <Globe className="h-6 w-6 text-[#0B69FF]" />
             <span>Référencement Naturel & SEO Local (Tataouine)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -106,7 +106,7 @@ export default function AdminSeoPage() {
                   type="checkbox"
                   checked={p.indexable}
                   onChange={(e) => updatePage(idx, "indexable", e.target.checked)}
-                  className="rounded text-[#1B3A6B]"
+                  className="rounded text-[#0B69FF]"
                 />
                 <span>Indexable par Google (index, follow)</span>
               </label>

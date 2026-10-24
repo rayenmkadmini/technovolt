@@ -26,7 +26,7 @@ export default async function AdminAppointmentsPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Calendar className="h-6 w-6 text-[#1B3A6B]" />
+            <Calendar className="h-6 w-6 text-[#0B69FF]" />
             <span>Planning & Rendez-vous d'Intervention</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
@@ -45,10 +45,10 @@ export default async function AdminAppointmentsPage({
         {initialAppointments.map((apt) => (
           <div
             key={apt.id}
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4 hover:border-[#1B3A6B] transition-colors"
+            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4 hover:border-[#0B69FF] transition-colors"
           >
             <div className="flex items-center justify-between">
-              <span className="font-mono text-xs font-bold text-[#1B3A6B]">
+              <span className="font-mono text-xs font-bold text-[#0B69FF]">
                 {apt.reference_number}
               </span>
               <Badge variant="success" className="text-xs">

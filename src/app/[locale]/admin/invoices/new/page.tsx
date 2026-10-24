@@ -159,7 +159,7 @@ export default function NewInvoicePage() {
         {/* Document Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-slate-200 pb-8">
           <div>
-            <div className="text-2xl font-black text-[#1B3A6B] tracking-tight">
+            <div className="text-2xl font-black text-[#0B69FF] tracking-tight">
               TECHNOVOLT
             </div>
             <div className="text-xs font-semibold text-[#F5A623] uppercase tracking-wider">
@@ -363,7 +363,7 @@ export default function NewInvoicePage() {
               <span className="font-mono font-bold">{formatCurrency(taxAmount, "fr")}</span>
             </div>
 
-            <div className="flex items-center justify-between text-slate-900 font-black text-sm border-t-2 border-slate-300 pt-2 text-[#1B3A6B]">
+            <div className="flex items-center justify-between text-slate-900 font-black text-sm border-t-2 border-slate-300 pt-2 text-[#0B69FF]">
               <span>TOTAL FACTURÉ TTC :</span>
               <span className="text-base font-mono">
                 {formatCurrency(totalTTC, "fr")}

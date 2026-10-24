@@ -105,7 +105,7 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
       {/* Gallery Section Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200/80 pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 text-xs font-bold text-[#1B3A6B] uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-2 text-xs font-bold text-[#0B69FF] uppercase tracking-wider mb-2">
             <Layers className="h-4 w-4 text-[#F5A623]" />
             <span>
               {locale === "ar"
@@ -142,7 +142,7 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeCategory === cat.id
-                  ? "bg-[#1B3A6B] text-white shadow-sm"
+                  ? "bg-[#0B69FF] text-white shadow-sm"
                   : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
               }`}
             >
@@ -158,7 +158,7 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
           <div
             key={photo.id}
             onClick={() => setSelectedPhotoIndex(idx)}
-            className="group relative aspect-square rounded-xl overflow-hidden bg-slate-900 cursor-pointer border border-slate-200 hover:border-[#1B3A6B] shadow-xs hover:shadow-lg transition-all duration-300"
+            className="group relative aspect-square rounded-xl overflow-hidden bg-slate-900 cursor-pointer border border-slate-200 hover:border-[#0B69FF] shadow-xs hover:shadow-lg transition-all duration-300"
           >
             <Image
               src={photo.src}
@@ -214,7 +214,7 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
           {/* Top Bar */}
           <div className="flex items-center justify-between text-white max-w-6xl mx-auto w-full z-10">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#1B3A6B] text-white">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#0B69FF] text-white">
                 {activePhoto.categoryLabel[locale as "fr" | "ar" | "en"] || activePhoto.categoryLabel.fr}
               </span>
               <span className="text-xs text-slate-300">

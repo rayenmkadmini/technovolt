@@ -141,7 +141,7 @@ export default async function ServiceDetailPage({
               {service.benefits && service.benefits.length > 0 && (
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 space-y-4">
                   <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <ShieldCheck className="h-5 w-5 text-[#1B3A6B]" />
+                    <ShieldCheck className="h-5 w-5 text-[#0B69FF]" />
                     <span>Vos Avantages avec TECHNOVOLT</span>
                   </h2>
                   <ul className="space-y-3 pt-2">
@@ -169,7 +169,7 @@ export default async function ServiceDetailPage({
                   <div className="mt-2">
                     {service.show_price && service.price_from ? (
                       <div>
-                        <div className="text-2xl font-black text-[#1B3A6B]">
+                        <div className="text-2xl font-black text-[#0B69FF]">
                           À partir de {formatCurrency(service.price_from, locale)}
                         </div>
                         <span className="text-xs text-slate-500">
@@ -178,7 +178,7 @@ export default async function ServiceDetailPage({
                       </div>
                     ) : (
                       <div>
-                        <div className="text-2xl font-black text-[#1B3A6B]">
+                        <div className="text-2xl font-black text-[#0B69FF]">
                           Sur Devis Gratuit
                         </div>
                         <span className="text-xs text-slate-500">
@@ -240,14 +240,14 @@ export default async function ServiceDetailPage({
                     className="group rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md transition-all flex flex-col justify-between"
                   >
                     <div>
-                      <h3 className="font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors mb-2">
+                      <h3 className="font-bold text-slate-900 group-hover:text-[#0B69FF] transition-colors mb-2">
                         {rel.title}
                       </h3>
                       <p className="text-xs text-slate-600 line-clamp-2">
                         {rel.short_description}
                       </p>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#1B3A6B]">
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0B69FF]">
                       <span>En savoir plus</span>
                       <ChevronRight className="h-4 w-4" />
                     </div>

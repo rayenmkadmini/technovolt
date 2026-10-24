@@ -93,7 +93,7 @@ export default async function AdminDashboardPage({
               <CardTitle className="text-xs font-medium text-slate-500">
                 Chiffre d'Affaires Facturé
               </CardTitle>
-              <FileText className="h-4 w-4 text-[#1B3A6B]" />
+              <FileText className="h-4 w-4 text-[#0B69FF]" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-black text-slate-900">
@@ -169,7 +169,7 @@ export default async function AdminDashboardPage({
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Link href="/admin/leads" className="block">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#1B3A6B] hover:shadow-sm transition-all">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#0B69FF] hover:shadow-sm transition-all">
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>Nouvelles Demandes</span>
                 <Inbox className="h-4 w-4 text-blue-600" />
@@ -182,7 +182,7 @@ export default async function AdminDashboardPage({
           </Link>
 
           <Link href="/admin/appointments" className="block">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#1B3A6B] hover:shadow-sm transition-all">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#0B69FF] hover:shadow-sm transition-all">
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>Rendez-vous à venir</span>
                 <Calendar className="h-4 w-4 text-purple-600" />
@@ -195,7 +195,7 @@ export default async function AdminDashboardPage({
           </Link>
 
           <Link href="/admin/work-orders" className="block">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#1B3A6B] hover:shadow-sm transition-all">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#0B69FF] hover:shadow-sm transition-all">
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>Chantiers en Cours</span>
                 <Wrench className="h-4 w-4 text-[#F5A623]" />
@@ -208,7 +208,7 @@ export default async function AdminDashboardPage({
           </Link>
 
           <Link href="/admin/customers" className="block">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#1B3A6B] hover:shadow-sm transition-all">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 hover:border-[#0B69FF] hover:shadow-sm transition-all">
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>Clients Référencés</span>
                 <Users className="h-4 w-4 text-emerald-600" />
@@ -332,7 +332,7 @@ export default async function AdminDashboardPage({
                 className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 space-y-2"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#1B3A6B] flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[#0B69FF] flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5 text-[#F5A623]" />
                     <span>{apt.scheduled_date} à {apt.scheduled_time}</span>
                   </span>

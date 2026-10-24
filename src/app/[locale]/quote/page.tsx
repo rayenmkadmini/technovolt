@@ -47,7 +47,7 @@ export default async function QuotePage({
                 <span>Réponse sous 24h</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <FileCheck className="h-4 w-4 text-[#1B3A6B]" />
+                <FileCheck className="h-4 w-4 text-[#0B69FF]" />
                 <span>Prix détaillés</span>
               </span>
             </div>

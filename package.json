@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --test src/tests/financial.test.mjs",
+    "test": "node --test --experimental-strip-types src/tests/*.test.mjs",
     "lint": "eslint"
   },
   "dependencies": {

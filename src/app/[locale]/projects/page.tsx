@@ -48,7 +48,7 @@ export default async function ProjectsPage({
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-[#1B3A6B]" />
+                <ShieldCheck className="h-5 w-5 text-[#0B69FF]" />
                 <span>
                   {locale === "ar"
                     ? "أبرز المشاريع المنجزة"
@@ -81,7 +81,7 @@ export default async function ProjectsPage({
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-4 start-4">
-                      <span className="inline-flex items-center rounded-md bg-[#1B3A6B]/90 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-xs">
+                      <span className="inline-flex items-center rounded-md bg-[#0B69FF]/90 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white shadow-xs">
                         {proj.category}
                       </span>
                     </div>
@@ -102,7 +102,7 @@ export default async function ProjectsPage({
                         )}
                       </div>
 
-                      <h3 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors">
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-[#0B69FF] transition-colors">
                         {proj.title}
                       </h3>
 
@@ -114,7 +114,7 @@ export default async function ProjectsPage({
                     <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                       <Link
                         href="/quote"
-                        className="text-xs font-semibold text-[#1B3A6B] hover:text-[#0F2342] inline-flex items-center gap-1 group/btn"
+                        className="text-xs font-semibold text-[#0B69FF] hover:text-[#0F2342] inline-flex items-center gap-1 group/btn"
                       >
                         <span>
                           {locale === "ar"
@@ -136,7 +136,7 @@ export default async function ProjectsPage({
           <ProjectsGallery locale={locale} />
 
           {/* Bottom CTA */}
-          <div className="text-center p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-[#122442] to-[#1B3A6B] text-white shadow-xl relative overflow-hidden">
+          <div className="text-center p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-[#0848B8] to-[#0B69FF] text-white shadow-xl relative overflow-hidden">
             <div className="absolute top-0 end-0 w-64 h-64 bg-[#F5A623]/10 rounded-full blur-2xl pointer-events-none" />
             <h3 className="text-2xl sm:text-3xl font-bold mb-3">
               {locale === "ar"

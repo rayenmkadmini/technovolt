@@ -41,11 +41,11 @@
     "signOut": "Déconnexion"
   },
   "hero": {
-    "title": "Votre Expert en Solutions Électriques & Domotique",
+    "title": "CONSTRUIRE DES SOLUTIONS TECH POUR UN MEILLEUR DEMAIN.",
     "subtitle": "Installation, réparation et maintenance électrique pour particuliers et professionnels à Tataouine et ses environs. Qualité, fiabilité et prix compétitifs.",
     "cta": "Demander un Devis Gratuit",
     "ctaWhatsapp": "Contactez-nous sur WhatsApp",
-    "tagline": "Électricité générale | Domotique"
+    "tagline": "IDEAS — TECH — IMPACT"
   },
   "services": {
     "title": "Nos Services",
@@ -280,5 +280,34 @@
     "about": "À Propos",
     "contact": "Contact",
     "quote": "Demande de Devis"
+  },
+  "bot": {
+    "launcherLabel": "TechnoVolt Bot — Assistant IA Électrique",
+    "title": "TechnoVolt Bot",
+    "subtitle": "Expert Électricité & Domotique",
+    "statusOnline": "En ligne",
+    "welcomeMessage": "Bonjour ! Je suis TechnoVolt Bot, votre assistant spécialisé en électricité générale, domotique, matériel électrique et estimations en Tunisie. Comment puis-je vous aider ?",
+    "inputPlaceholder": "Posez votre question (ex : disjoncteur, section de câble, prix...)",
+    "send": "Envoyer",
+    "newChat": "Nouvelle conversation",
+    "minimize": "Réduire",
+    "close": "Fermer",
+    "copy": "Copier la réponse",
+    "copied": "Copié !",
+    "retry": "Réessayer",
+    "typing": "TechnoVolt Bot analyse votre demande...",
+    "disclaimer": "Réponses indicatives et éducatives. Pour tout travail sur installation, coupez le disjoncteur général.",
+    "quoteCta": "Demander un devis gratuit TechnoVolt",
+    "errorNetwork": "Erreur de connexion. Veuillez réessayer.",
+    "errorGeneric": "Une erreur est survenue lors de la réponse.",
+    "characterLimit": "1000 caractères max",
+    "suggestedQuestions": [
+      "Combien coûte un disjoncteur en Tunisie ?",
+      "Quelle différence entre un disjoncteur et un différentiel ?",
+      "Comment estimer la consommation d’un appareil ?",
+      "Comment choisir un interrupteur connecté ?",
+      "Quel système domotique choisir pour une maison ?",
+      "Pourquoi mon disjoncteur déclenche-t-il ?"
+    ]
   }
 }

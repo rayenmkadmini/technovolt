@@ -54,10 +54,11 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6">
-        <div className="text-center space-y-3">
+    <div suppressHydrationWarning className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div suppressHydrationWarning className="w-full max-w-md bg-white rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6">
+        <div suppressHydrationWarning className="text-center space-y-3">
           <div
+            suppressHydrationWarning
             className="relative h-12 w-48 mx-auto overflow-hidden flex items-center justify-center"
             style={{ position: "relative" }}
           >
@@ -65,6 +66,7 @@ export default function AdminLoginPage() {
               src="/logo.png"
               alt="TECHNOVOLT"
               fill
+              sizes="192px"
               className="object-contain"
               priority
             />
