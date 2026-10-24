@@ -84,7 +84,7 @@ export default async function LocaleLayout({
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={dir} className="h-full scroll-smooth">
+    <html lang={locale} dir={dir} className="h-full scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -93,7 +93,10 @@ export default async function LocaleLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-[#F5A623] selection:text-[#1B3A6B]">
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-[#F5A623] selection:text-[#1B3A6B]"
+      >
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>
