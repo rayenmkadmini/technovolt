@@ -193,10 +193,10 @@ export function Footer() {
             </a>
           </p>
           <div className="flex items-center gap-6">
-            <Link href="/about" className="hover:text-slate-200 transition-colors">
+            <Link href="/privacy" className="hover:text-slate-200 transition-colors">
               {t("privacy")}
             </Link>
-            <Link href="/about" className="hover:text-slate-200 transition-colors">
+            <Link href="/terms" className="hover:text-slate-200 transition-colors">
               {t("terms")}
             </Link>
             <Link href="/admin/login" className="text-slate-400 hover:text-[#F5A623] transition-colors">
