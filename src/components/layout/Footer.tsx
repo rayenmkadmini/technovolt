@@ -181,6 +181,17 @@ export function Footer() {
           <p>
             &copy; {new Date().getFullYear()} TECHNOVOLT. {t("allRights")}
           </p>
+          <p>
+            Developed by{" "}
+            <a
+              href="https://www.nuqyan.tn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#0B69FF] hover:underline font-medium"
+            >
+              Nuqyan Agency
+            </a>
+          </p>
           <div className="flex items-center gap-6">
             <Link href="/about" className="hover:text-slate-200 transition-colors">
               {t("privacy")}
