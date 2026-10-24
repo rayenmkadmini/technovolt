@@ -15,6 +15,7 @@ import {
   Wrench,
   CheckCircle2,
   ArrowRight,
+  Phone,
   PhoneCall,
   MessageSquare,
   HelpCircle,
@@ -113,18 +114,36 @@ export default async function HomePage({
                 </div>
 
                 {/* Badges / Guarantees */}
-                <div className="pt-8 border-t border-white/15 grid grid-cols-3 gap-4 text-xs sm:text-sm text-slate-300">
+                <div className="pt-8 border-t border-white/15 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs sm:text-sm text-slate-300">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-5 w-5 text-[#F5A623] shrink-0" />
-                    <span>Conformité & Sécurité</span>
+                    <span>
+                      {locale === "ar"
+                        ? "المطابقة والسلامة"
+                        : locale === "en"
+                        ? "Safety & Compliance"
+                        : "Conformité & Sécurité"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-[#F5A623] shrink-0" />
-                    <span>Intervention Rapide</span>
+                    <span>
+                      {locale === "ar"
+                        ? "تدخل سريع"
+                        : locale === "en"
+                        ? "Fast Intervention"
+                        : "Intervention Rapide"}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FileCheck className="h-5 w-5 text-[#F5A623] shrink-0" />
-                    <span>Devis Gratuit 100%</span>
+                    <span>
+                      {locale === "ar"
+                        ? "عرض سعر مجاني"
+                        : locale === "en"
+                        ? "Free Quotation"
+                        : "Devis Gratuit"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -133,23 +152,37 @@ export default async function HomePage({
               <div className="lg:col-span-5 relative">
                 <div className="relative mx-auto max-w-md lg:max-w-none rounded-2xl overflow-hidden border border-white/20 bg-white/5 backdrop-blur-xl p-4 shadow-2xl">
                   <div
-                    className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800"
+                    className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-900"
                     style={{ position: "relative" }}
                   >
                     <Image
-                      src="/logo.jpg"
+                      src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop"
                       alt="TECHNOVOLT Électricité générale et domotique"
                       fill
                       priority
                       className="object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-6">
+                    {/* Floating Brand Logo Badge */}
+                    <div className="absolute top-4 start-4 rounded-xl bg-white/95 backdrop-blur-md px-4 py-2 shadow-lg border border-white/40 flex items-center">
+                      <div className="relative h-7 w-32" style={{ position: "relative" }}>
+                        <Image
+                          src="/logo.png"
+                          alt="TECHNOVOLT"
+                          fill
+                          className="object-contain"
+                          priority
+                        />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent flex items-end p-6">
                       <div className="text-white space-y-1">
                         <span className="text-xs uppercase tracking-wider text-[#F5A623] font-semibold">
-                          Tataouine & Région
+                          {locale === "ar" ? "تطاوين والجنوب التونسي" : "Tataouine & Région"}
                         </span>
                         <h4 className="font-bold text-lg">
-                          Solutions Électriques Professionnelles
+                          {locale === "ar"
+                            ? "حلول كهربائية احترافية وتحكم ذكي"
+                            : "Solutions Électriques Professionnelles & Domotique"}
                         </h4>
                       </div>
                     </div>
@@ -173,162 +206,312 @@ export default async function HomePage({
         </section>
 
         {/* ================================================================= */}
-        {/* 2. SERVICES OVERVIEW */}
+        {/* 2. SERVICES OVERVIEW - ASYMMETRIC HUMAN-CRAFTED SHOWCASE */}
         {/* ================================================================= */}
-        <section className="py-20 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
-              <Badge variant="secondary" className="px-3 py-1">
-                {tServices("title")}
-              </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-                {tServices("subtitle")}
-              </h2>
-            </div>
+        <section className="py-20 bg-slate-50 border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="space-y-3 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1B3A6B]/10 text-[#1B3A6B] text-xs font-bold">
+                  <Zap className="h-3.5 w-3.5 text-[#F5A623]" />
+                  <span>{tServices("title")}</span>
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                  {tServices("subtitle")}
+                </h2>
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                  {locale === "ar"
+                    ? "خدمات فنية معتمدة تلبي أدق متطلبات الأمان الكهربائي والمناخ الصحراوي في تطاوين."
+                    : "Interventions certifiées adaptées aux spécificités techniques et climatiques de Tataouine et du sud tunisien."}
+                </p>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {services.map((service) => (
-                <Card
-                  key={service.id}
-                  className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-slate-200/80 flex flex-col"
-                >
-                  <div
-                    className="relative aspect-[16/10] overflow-hidden bg-slate-100"
-                    style={{ position: "relative" }}
-                  >
-                    <Image
-                      src={service.cover_image}
-                      alt={service.title || "Service TECHNOVOLT"}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 end-3">
-                      {service.show_price && service.price_from ? (
-                        <span className="inline-flex items-center rounded-lg bg-[#1B3A6B] px-3 py-1 text-xs font-semibold text-white shadow-md">
-                          {tServices("startingFrom")}{" "}
-                          {formatCurrency(service.price_from, locale)}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-lg bg-slate-900/80 backdrop-blur-md px-3 py-1 text-xs font-medium text-white">
-                          Devis Gratuit
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <CardContent className="p-6 flex-1 flex flex-col justify-between space-y-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors mb-2">
-                        {service.title}
-                      </h3>
-                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
-                        {service.short_description}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <Link
-                        href={`/services/${service.slug}`}
-                        className="text-sm font-semibold text-[#1B3A6B] hover:text-[#0F2342] inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
-                      >
-                        <span>{tServices("learnMore")}</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Link>
-
-                      <Link href={`/quote?service=${service.id}`}>
-                        <Button variant="outline" size="sm" className="text-xs">
-                          {tServices("requestQuote")}
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="text-center mt-12">
-              <Link href="/services">
-                <Button variant="default" size="lg" className="gap-2">
+              <Link href="/services" className="shrink-0">
+                <Button variant="outline" className="gap-2 font-semibold">
                   <span>{tServices("allServices")}</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>
+
+            {/* Featured Primary Service: Full Electrical Engineering Showcase */}
+            {services.length > 0 && (
+              <div className="rounded-3xl bg-white border border-slate-200/90 shadow-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 transition-all hover:shadow-lg">
+                <div
+                  className="lg:col-span-6 relative aspect-[16/10] lg:aspect-auto overflow-hidden bg-slate-900"
+                  style={{ position: "relative" }}
+                >
+                  <Image
+                    src={services[0].cover_image}
+                    alt={services[0].title || "Installation Électrique TECHNOVOLT"}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute top-4 start-4">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#1B3A6B]/95 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-white shadow-md">
+                      <ShieldCheck className="h-4 w-4 text-[#F5A623]" />
+                      <span>{locale === "ar" ? "الخدمة المركزية" : "Service Majeur"}</span>
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 end-4">
+                    <span className="inline-flex items-center rounded-lg bg-slate-900/90 backdrop-blur-md px-3 py-1.5 text-xs font-semibold text-white">
+                      Tataouine & Région
+                    </span>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-6 p-8 sm:p-10 flex flex-col justify-between space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span className="font-semibold uppercase tracking-wider text-[#1B3A6B]">
+                        Génie Électrique Résidentiel & Tertiaire
+                      </span>
+                      {services[0].estimated_duration && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5 text-slate-400" />
+                          <span>{services[0].estimated_duration}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+                      {services[0].title}
+                    </h3>
+
+                    <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                      {services[0].short_description}
+                    </p>
+
+                    {services[0].scope_of_work && services[0].scope_of_work.length > 0 && (
+                      <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {services[0].scope_of_work.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100"
+                          >
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                            <span className="truncate">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs text-slate-500">Tarification</div>
+                      <div className="text-lg font-extrabold text-[#1B3A6B]">
+                        {services[0].show_price && services[0].price_from
+                          ? `${tServices("startingFrom")} ${formatCurrency(services[0].price_from, locale)}`
+                          : "Devis Gratuit & Personnalisé"}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Link href={`/services/${services[0].slug}`}>
+                        <Button variant="outline" size="sm" className="font-semibold text-xs">
+                          {tServices("learnMore")}
+                        </Button>
+                      </Link>
+                      <Link href={`/quote?service=${services[0].id}`}>
+                        <Button variant="secondary" size="sm" className="gap-1.5 font-bold text-xs shadow-sm">
+                          <Zap className="h-3.5 w-3.5" />
+                          <span>{tServices("requestQuote")}</span>
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Asymmetric Grid for Specialized Secondary Services */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {services.slice(1).map((service) => (
+                <div
+                  key={service.id}
+                  className="group rounded-2xl bg-white border border-slate-200 p-6 flex flex-col justify-between hover:border-[#1B3A6B]/40 hover:shadow-lg transition-all duration-300 space-y-5"
+                >
+                  <div className="space-y-4">
+                    <div
+                      className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-100"
+                      style={{ position: "relative" }}
+                    >
+                      <Image
+                        src={service.cover_image}
+                        alt={service.title || "Service"}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 end-3">
+                        {service.show_price && service.price_from ? (
+                          <span className="inline-block rounded-md bg-[#1B3A6B] px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+                            {tServices("startingFrom")} {formatCurrency(service.price_from, locale)}
+                          </span>
+                        ) : (
+                          <span className="inline-block rounded-md bg-slate-900/80 backdrop-blur-md px-2.5 py-1 text-xs font-semibold text-white">
+                            Devis Gratuit
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-lg font-bold text-slate-900 group-hover:text-[#1B3A6B] transition-colors">
+                        {service.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                        {service.short_description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <Link
+                      href={`/services/${service.slug}`}
+                      className="text-xs font-bold text-[#1B3A6B] inline-flex items-center gap-1 hover:underline"
+                    >
+                      <span>{tServices("learnMore")}</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </Link>
+
+                    <Link href={`/quote?service=${service.id}`}>
+                      <Button variant="ghost" size="sm" className="text-xs font-semibold text-slate-700 hover:text-[#1B3A6B]">
+                        {tServices("requestQuote")}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* ================================================================= */}
-        {/* 3. WHY CHOOSE TECHNOVOLT */}
+        {/* 3. WHY CHOOSE TECHNOVOLT - HUMAN LOCAL ENGINEERING FOCUS */}
         {/* ================================================================= */}
         <section className="py-20 bg-white border-y border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-              <Badge variant="secondary" className="px-3 py-1">
-                {tWhy("title")}
-              </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-                {tWhy("subtitle")}
-              </h2>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              {/* Left Column: Local Engineering Authority */}
+              <div className="lg:col-span-5 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F5A623]/10 text-[#B3740A] text-xs font-bold">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#F5A623]" />
+                  <span>{tWhy("title")}</span>
+                </div>
+
+                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                  {tWhy("subtitle")}
+                </h2>
+
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+                  {locale === "ar"
+                    ? "يتطلب المناخ الصحراوي القاسي في تطاوين معايير كهربائية صارمة. نحن نصمم ونصلح شبكاتكم لتتحمل درجات الحرارة العالية وتقلبات الجهد الكهربائي بكل أمان."
+                    : "Le climat du sud tunisien impose des exigences électriques accrues : fortes chaleurs estivales, surcharges de climatisation et surtensions orageuses. TECHNOVOLT conçoit des installations durables et sécurisées."}
+                </p>
+
+                {/* Local Stats Box */}
+                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#1B3A6B]">
+                    {locale === "ar" ? "التزامنا المحلي بتطاوين" : "Nos Engagements Locaux à Tataouine"}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-2xl font-black text-[#1B3A6B]">6j / 7</div>
+                      <div className="text-xs text-slate-500 font-medium">Disponibilité terrain</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-[#F5A623]">100%</div>
+                      <div className="text-xs text-slate-500 font-medium">Devis sans engagement</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Link href="/contact">
+                    <Button variant="default" className="gap-2 font-bold shadow-md">
+                      <Phone className="h-4 w-4" />
+                      <span>{locale === "ar" ? "تواصل مع فريقنا الفني" : "Contacter nos techniciens"}</span>
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Column: 4 Technical Pillars Grid */}
+              <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-[#1B3A6B]/10 flex items-center justify-center text-[#1B3A6B]">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Normes & Sécurité Absolue
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Mise à la terre certifiée, disjoncteurs différentiels 30mA et appareillages conformes aux standards tunisiens et internationaux.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-[#F5A623]/15 flex items-center justify-center text-[#D4891A]">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Réactivité à Tataouine
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Déplacement rapide pour les pannes urgentes et diagnostic transparent avant toute intervention de réparation.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-800">
+                    <FileCheck className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Tarifs Clairs en Millimes TND
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Devis détaillé avec prix unitaires précis (3 décimales). Aucun frais dissimulé, validation préalable obligatoire.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:shadow-md transition-all space-y-3">
+                  <div className="h-11 w-11 rounded-xl bg-blue-100 flex items-center justify-center text-blue-800">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Ancrage Régional Sud
+                  </h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Couverture de Tataouine Ville, Ghomrassen, Remada, Bir Lahmar, Smâr, Beni Khedache et Dhehiba.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[
-                {
-                  key: "experience",
-                  icon: Wrench,
-                  title: "Expertise Technique Éprouvée",
-                  desc: "Des spécialistes qualifiés en installations électriques, dépannages haute sécurité et automatismes modernes.",
-                },
-                {
-                  key: "quality",
-                  icon: ShieldCheck,
-                  title: "Matériel Certifié & Conforme",
-                  desc: "Utilisation exclusive d'appareillages conformes aux normes tunisiennes et internationales pour une sécurité sans faille.",
-                },
-                {
-                  key: "availability",
-                  icon: Clock,
-                  title: "Réactivité à Tataouine",
-                  desc: "Interventions rapides en cas de coupure ou panne urgente dans le gouvernorat de Tataouine et ses délégations.",
-                },
-                {
-                  key: "pricing",
-                  icon: FileCheck,
-                  title: "Tarifs Clairs & Transparents",
-                  desc: "Devis détaillé avant chaque intervention. Pas de frais cachés, prix calculés avec rigueur et justesse.",
-                },
-                {
-                  key: "guarantee",
-                  icon: CheckCircle2,
-                  title: "Garantie & Suivi Technique",
-                  desc: "Chaque prestation réalisée par TECHNOVOLT bénéficie d'un suivi attentif et d'une garantie de bon fonctionnement.",
-                },
-                {
-                  key: "local",
-                  icon: MapPin,
-                  title: "Proximité Locale",
-                  desc: "Une entreprise ancrée à Tataouine, connaissant parfaitement les contraintes climatiques et réseau du sud tunisien.",
-                },
-              ].map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={idx}
-                    className="p-6 rounded-xl border border-slate-100 bg-slate-50/60 hover:bg-white hover:border-slate-200 hover:shadow-lg transition-all duration-300 space-y-3"
-                  >
-                    <div className="h-12 w-12 rounded-lg bg-[#1B3A6B]/10 flex items-center justify-center text-[#1B3A6B]">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                );
-              })}
+            {/* Regional Delegation Strip */}
+            <div className="p-6 rounded-2xl bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-md">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-6 w-6 text-[#F5A623] shrink-0" />
+                <div>
+                  <h4 className="font-bold text-sm text-white">
+                    {locale === "ar" ? "المناطق المغطاة بولاية تطاوين" : "Zone d'Intervention — Gouvernorat de Tataouine"}
+                  </h4>
+                  <p className="text-xs text-slate-300">
+                    Tataouine Ville &bull; Ghomrassen &bull; Remada &bull; Bir Lahmar &bull; Smâr &bull; Beni Khedache &bull; Dhehiba
+                  </p>
+                </div>
+              </div>
+
+              <Link href="/contact" className="shrink-0">
+                <Button variant="secondary" size="sm" className="font-bold text-xs gap-1.5">
+                  <span>Demander une visite</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

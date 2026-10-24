@@ -30,8 +30,8 @@ export default function NewQuotationPage() {
   const [customerName, setCustomerName] = useState("Youssef Ben Salem");
   const [customerPhone, setCustomerPhone] = useState("+216 98 123 456");
   const [customerAddress, setCustomerAddress] = useState("Tataouine — Cité Ennour");
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split("T")[0]);
-  const [validUntil, setValidUntil] = useState(
+  const [issueDate, setIssueDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [validUntil, setValidUntil] = useState(() =>
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [taxRate, setTaxRate] = useState(19.0);

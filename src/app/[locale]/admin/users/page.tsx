@@ -12,14 +12,24 @@ import {
 
 const demoUsers = [
   {
+    id: "usr-00",
+    fullName: "Rayen Mkadmini (Super Admin)",
+    email: "rayen25360@gmail.com",
+    role: "super_admin",
+    roleLabel: "Super Admin",
+    status: "active",
+    lastLogin: "Session active (Connecté)",
+    permissions: "Accès Total Illimité (Super Administrateur, Rôles, Supabase, RLS, Finances, CMS)",
+  },
+  {
     id: "usr-01",
-    fullName: "Rayen M. (Directeur Technique)",
+    fullName: "Directeur Technique TECHNOVOLT",
     email: "contact@technovolt.tn",
     role: "owner",
-    roleLabel: "Super Admin / Propriétaire",
+    roleLabel: "Propriétaire",
     status: "active",
     lastLogin: "Aujourd'hui à 08:35",
-    permissions: "Accès Total (Finances, Paramètres, Utilisateurs, Chantiers)",
+    permissions: "Accès Direction (Finances, Paramètres, Utilisateurs, Chantiers)",
   },
   {
     id: "usr-02",
@@ -41,6 +51,27 @@ const demoUsers = [
     lastLogin: "23 Octobre 2026",
     permissions: "Factures, Devis, Règlements, Dépenses, Rapports Financiers",
   },
+  {
+    id: "usr-04",
+    fullName: "Client Tataouine (Portail Client)",
+    email: "client.tataouine@technovolt.tn",
+    role: "client",
+    roleLabel: "Client",
+    status: "active",
+    lastLogin: "Aujourd'hui à 11:20",
+    permissions: "Consultation devis & factures personnelles, demande d'intervention",
+  },
+];
+
+const systemRoles = [
+  { name: "super_admin", label: "Super Admin", desc: "Autorité totale et illimitée sur la plateforme et les utilisateurs", color: "bg-purple-100 text-purple-900 border-purple-200" },
+  { name: "owner", label: "Propriétaire", desc: "Gérant principal de l'entreprise TECHNOVOLT", color: "bg-blue-100 text-blue-900 border-blue-200" },
+  { name: "admin", label: "Administrateur", desc: "Gestion des opérations, clients, stocks et finances", color: "bg-slate-100 text-slate-800 border-slate-200" },
+  { name: "manager", label: "Responsable d'Exploitation", desc: "Planning des interventions et suivi des chantiers", color: "bg-amber-100 text-amber-900 border-amber-200" },
+  { name: "accountant", label: "Comptable", desc: "Facturation, règlements, TVA et export comptable", color: "bg-emerald-100 text-emerald-900 border-emerald-200" },
+  { name: "technician", label: "Technicien Terrain", desc: "Exécution des ordres de mission et rapports photos", color: "bg-cyan-100 text-cyan-900 border-cyan-200" },
+  { name: "content_editor", label: "Éditeur CMS", desc: "Gestion des pages web, réalisations et avis clients", color: "bg-indigo-100 text-indigo-900 border-indigo-200" },
+  { name: "client", label: "Client (Portail)", desc: "Accès à ses devis, factures et suivi de ses demandes", color: "bg-orange-100 text-orange-900 border-orange-200" },
 ];
 
 export default async function AdminUsersPage({
@@ -152,6 +183,38 @@ export default async function AdminUsersPage({
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* System Roles Grid */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <Key className="h-4 w-4 text-[#F5A623]" />
+            <span>Nomenclature des 8 Rôles Système & Périmètres de Sécurité (RBAC)</span>
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Chaque rôle dispose de règles de sécurité au niveau des lignes (Row Level Security - RLS) sous Supabase.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {systemRoles.map((r) => (
+            <div
+              key={r.name}
+              className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-2 hover:bg-slate-50 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <span className={`inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${r.color}`}>
+                  {r.label}
+                </span>
+                <code className="text-[10px] text-slate-400 font-mono">{r.name}</code>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {r.desc}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

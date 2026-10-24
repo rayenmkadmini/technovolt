@@ -103,13 +103,16 @@ export default function AdminLayout({
             {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
 
-          <Link href="/admin" className="flex items-center gap-2">
-            <div className="relative h-9 w-28 overflow-hidden rounded">
+          <Link href="/admin" className="flex items-center gap-3">
+            <div
+              className="relative h-9 w-36 overflow-hidden rounded bg-white px-2 py-1 flex items-center shadow-xs"
+              style={{ position: "relative" }}
+            >
               <Image
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="TECHNOVOLT Admin"
                 fill
-                sizes="112px"
+                sizes="144px"
                 className="object-contain object-start"
               />
             </div>

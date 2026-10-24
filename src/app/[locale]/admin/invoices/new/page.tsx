@@ -28,8 +28,8 @@ export default function NewInvoicePage() {
   const [customerName, setCustomerName] = useState("Société Sud Équipement");
   const [customerPhone, setCustomerPhone] = useState("+216 75 760 111");
   const [customerAddress, setCustomerAddress] = useState("Rue Habib Bourguiba, Tataouine");
-  const [issueDate, setIssueDate] = useState(new Date().toISOString().split("T")[0]);
-  const [dueDate, setDueDate] = useState(
+  const [issueDate, setIssueDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [dueDate, setDueDate] = useState(() =>
     new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
   const [taxRate, setTaxRate] = useState(19.0);

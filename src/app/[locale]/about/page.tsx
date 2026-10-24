@@ -77,13 +77,37 @@ export default async function AboutPage({
             </div>
 
             <div className="lg:col-span-6 relative">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 shadow-xl">
+              <div
+                className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 shadow-xl"
+                style={{ position: "relative" }}
+              >
                 <Image
-                  src="/logo.jpg"
-                  alt="TECHNOVOLT Électricité générale et domotique"
+                  src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop"
+                  alt="TECHNOVOLT Électricité générale et domotique à Tataouine"
                   fill
                   className="object-cover"
                 />
+                <div className="absolute top-4 start-4 rounded-xl bg-white/95 backdrop-blur-md px-4 py-2 shadow-lg border border-white/40 flex items-center">
+                  <div className="relative h-7 w-32" style={{ position: "relative" }}>
+                    <Image
+                      src="/logo.png"
+                      alt="TECHNOVOLT"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-6">
+                  <div className="text-white space-y-1">
+                    <span className="text-xs uppercase tracking-wider text-[#F5A623] font-semibold">
+                      Tataouine & Région
+                    </span>
+                    <h4 className="font-bold text-lg">
+                      Expertise Terrain & Normes de Sécurité
+                    </h4>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -13,7 +13,8 @@ import {
   FileText,
   Zap,
   ShieldCheck,
-  LayoutDashboard,
+  User,
+  UserPlus,
 } from "lucide-react";
 
 export function Header() {
@@ -50,13 +51,21 @@ export function Header() {
               <span>Interventions certifiées & Devis gratuit</span>
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
-              href="/admin"
-              className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
+              href="/client/login"
+              className="flex items-center gap-1.5 text-slate-200 hover:text-white transition-colors"
             >
-              <LayoutDashboard className="h-3 w-3" />
-              <span>{t("admin")}</span>
+              <User className="h-3 w-3 text-[#F5A623]" />
+              <span>{t("login")}</span>
+            </Link>
+            <span className="text-white/30">|</span>
+            <Link
+              href="/client/register"
+              className="flex items-center gap-1.5 text-slate-200 hover:text-[#F5A623] transition-colors font-medium"
+            >
+              <UserPlus className="h-3 w-3 text-[#F5A623]" />
+              <span>{t("register")}</span>
             </Link>
           </div>
         </div>
@@ -68,14 +77,14 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
             <div
-              className="relative h-12 w-36 sm:h-14 sm:w-44 overflow-hidden rounded-md flex items-center"
+              className="relative h-10 w-44 sm:h-12 sm:w-52 overflow-hidden flex items-center"
               style={{ position: "relative" }}
             >
               <Image
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="TECHNOVOLT Logo"
                 fill
-                sizes="(max-width: 640px) 144px, 176px"
+                sizes="(max-width: 640px) 176px, 208px"
                 className="object-contain object-start transition-transform duration-300 group-hover:scale-105"
                 priority
               />
@@ -165,14 +174,24 @@ export function Header() {
               </Button>
             </Link>
 
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-2 py-2 text-xs text-slate-500 hover:text-slate-900"
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" />
-              <span>{t("admin")}</span>
-            </Link>
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+              <Link
+                href="/client/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <User className="h-3.5 w-3.5 text-[#1B3A6B]" />
+                <span>{t("login")}</span>
+              </Link>
+              <Link
+                href="/client/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-slate-100 text-xs font-semibold text-[#1B3A6B] hover:bg-slate-200 transition-colors"
+              >
+                <UserPlus className="h-3.5 w-3.5 text-[#F5A623]" />
+                <span>{t("register")}</span>
+              </Link>
+            </div>
           </div>
         </div>
       )}
