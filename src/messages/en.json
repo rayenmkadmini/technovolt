@@ -1,0 +1,257 @@
+{
+  "metadata": {
+    "title": "TECHNOVOLT - General Electrical & Home Automation in Tataouine",
+    "description": "TECHNOVOLT, your expert in electrical solutions and home automation in Tataouine, Tunisia. Installation, repair, electrical maintenance, air conditioning and smart home."
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "projects": "Projects",
+    "about": "About",
+    "reviews": "Reviews",
+    "contact": "Contact",
+    "requestQuote": "Request a Quote",
+    "admin": "Admin"
+  },
+  "hero": {
+    "title": "Your Expert in Electrical Solutions & Home Automation",
+    "subtitle": "Installation, repair and electrical maintenance for residential and commercial clients in Tataouine and surrounding areas. Quality, reliability and competitive pricing.",
+    "cta": "Request a Free Quote",
+    "ctaWhatsapp": "Contact Us on WhatsApp",
+    "tagline": "General Electrical | Home Automation"
+  },
+  "services": {
+    "title": "Our Services",
+    "subtitle": "Complete electrical solutions for all your residential and commercial needs",
+    "learnMore": "Learn more",
+    "requestQuote": "Request a quote",
+    "allServices": "All services",
+    "startingFrom": "Starting from",
+    "categories": {
+      "electrical_installation": "Electrical Installation",
+      "electrical_repair": "Electrical Repair",
+      "electrical_maintenance": "Electrical Maintenance",
+      "lighting": "Lighting",
+      "electrical_panel": "Electrical Panel",
+      "ac_installation": "AC Installation",
+      "ac_servicing": "AC Servicing",
+      "ac_repair": "AC Repair",
+      "water_heater_installation": "Water Heater Installation",
+      "water_heater_repair": "Water Heater Repair",
+      "home_automation": "Home Automation & Smart Home",
+      "general_maintenance": "General Maintenance"
+    }
+  },
+  "whyUs": {
+    "title": "Why Choose TECHNOVOLT?",
+    "subtitle": "Concrete reasons to trust us with your electrical work",
+    "points": {
+      "experience": {
+        "title": "Proven Experience",
+        "description": "A team of qualified technicians with years of experience in electrical work and home automation."
+      },
+      "quality": {
+        "title": "Guaranteed Quality",
+        "description": "We exclusively use high-quality materials and equipment for durable and safe installations."
+      },
+      "availability": {
+        "title": "Availability & Responsiveness",
+        "description": "Fast response and availability to handle your electrical emergencies as quickly as possible."
+      },
+      "pricing": {
+        "title": "Competitive Pricing",
+        "description": "Transparent and competitive rates, with free and detailed quotes before every job."
+      },
+      "guarantee": {
+        "title": "Satisfaction Guarantee",
+        "description": "We guarantee the quality of our work and provide follow-up after every completed project."
+      },
+      "local": {
+        "title": "Local Presence",
+        "description": "Based in Tataouine, we know our region's needs perfectly and respond quickly."
+      }
+    }
+  },
+  "projects": {
+    "title": "Our Projects",
+    "subtitle": "Discover some of our recent projects and the work we deliver every day",
+    "viewAll": "View all projects",
+    "viewProject": "View project",
+    "beforeAfter": "Before / After",
+    "completedOn": "Completed on",
+    "category": "Category",
+    "noProjects": "No projects to display at the moment."
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "subtitle": "A simple and transparent 6-step process for your electrical work",
+    "steps": {
+      "contact": {
+        "title": "Contact Us",
+        "description": "Call us, send a WhatsApp message, or fill out the online form to describe your needs."
+      },
+      "explain": {
+        "title": "Describe Your Needs",
+        "description": "Explain in detail the work required: type of service, location, and any useful information."
+      },
+      "quote": {
+        "title": "Receive Your Quote",
+        "description": "We send you a detailed and free quote as soon as possible after reviewing your request."
+      },
+      "confirm": {
+        "title": "Confirm the Appointment",
+        "description": "Once the quote is accepted, we schedule an intervention date that works for you."
+      },
+      "work": {
+        "title": "Work Execution",
+        "description": "Our team works with professionalism, cleanliness, and in compliance with safety standards."
+      },
+      "followUp": {
+        "title": "Follow-up & Warranty",
+        "description": "After the work is done, we provide follow-up and remain available for any questions or adjustments."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "What Our Clients Say",
+    "subtitle": "Our clients' reviews are our best advertisement",
+    "noReviews": "No client reviews yet. Be the first to share your experience!"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Find answers to the most common questions about our services"
+  },
+  "cta": {
+    "title": "Need a Reliable Electrician?",
+    "subtitle": "Contact us today for a free, no-obligation quote. We're here to help!",
+    "button": "Request a Free Quote",
+    "whatsapp": "Message Us on WhatsApp"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We're here to answer all your questions and requests",
+    "form": {
+      "name": "Full name",
+      "phone": "Phone number",
+      "email": "Email address",
+      "service": "Desired service",
+      "message": "Your message",
+      "preferredContact": "Preferred contact method",
+      "preferredDate": "Preferred date",
+      "submit": "Send message",
+      "sending": "Sending...",
+      "success": "Message sent successfully!",
+      "successMessage": "Thank you for your message. We will get back to you as soon as possible.",
+      "error": "An error occurred. Please try again or contact us directly.",
+      "consent": "I agree that my data may be used to process my request in accordance with the privacy policy."
+    },
+    "info": {
+      "phone": "Phone",
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "address": "Address",
+      "hours": "Working Hours",
+      "hoursValue": "Mon - Sat: 8:00 AM - 6:00 PM"
+    }
+  },
+  "quote": {
+    "title": "Request a Quote",
+    "subtitle": "Fill out the form below to receive a free, personalized quote",
+    "form": {
+      "name": "Full name",
+      "phone": "Phone number",
+      "email": "Email address (optional)",
+      "service": "Type of service",
+      "description": "Detailed description of the work needed",
+      "address": "Address of the intervention site",
+      "preferredDate": "Preferred date",
+      "preferredTime": "Preferred time",
+      "photos": "Photos of the site / issue",
+      "photosHint": "Add photos to help us better assess your request (max 5 photos)",
+      "preferredContact": "Preferred contact method",
+      "consent": "I agree that my data may be used to process my quote request in accordance with the privacy policy.",
+      "submit": "Submit quote request",
+      "sending": "Sending..."
+    },
+    "success": {
+      "title": "Request sent successfully!",
+      "message": "Thank you for your quote request. Our team will review it and contact you within 24 hours.",
+      "reference": "Reference number",
+      "whatsapp": "Contact us on WhatsApp for quick follow-up",
+      "backHome": "Back to home"
+    }
+  },
+  "about": {
+    "title": "About TECHNOVOLT",
+    "subtitle": "Your trusted partner for all your electrical and home automation needs in Tataouine",
+    "mission": {
+      "title": "Our Mission",
+      "content": "To provide reliable, safe and innovative electrical solutions to residential and commercial clients in Tataouine and the surrounding region. We are committed to delivering top-quality service at accessible prices."
+    },
+    "values": {
+      "title": "Our Values",
+      "content": "Professionalism, integrity, quality and customer satisfaction are the pillars that guide every one of our interventions. We treat every project with the same care and attention to detail."
+    },
+    "serviceArea": {
+      "title": "Service Area",
+      "content": "We serve Tataouine and all surrounding areas. Feel free to contact us to check if your location is covered by our services."
+    }
+  },
+  "footer": {
+    "description": "TECHNOVOLT — General electrical and home automation in Tataouine. Your expert in electrical solutions for residential and commercial clients.",
+    "quickLinks": "Quick Links",
+    "ourServices": "Our Services",
+    "contactInfo": "Contact Information",
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions",
+    "legal": "Legal Notice",
+    "copyright": "© {year} TECHNOVOLT.",
+    "allRights": "All rights reserved."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "open": "Open",
+    "selectLanguage": "Select language",
+    "noResults": "No results found",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "readMore": "Read more",
+    "viewDetails": "View details",
+    "tnd": "TND",
+    "currency": "TND"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPhone": "Please enter a valid phone number",
+    "minLength": "This field must contain at least {min} characters",
+    "maxLength": "This field must not exceed {max} characters",
+    "invalidDate": "Please enter a valid date"
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "services": "Services",
+    "projects": "Projects",
+    "about": "About",
+    "contact": "Contact",
+    "quote": "Request a Quote"
+  }
+}

@@ -1,0 +1,257 @@
+{
+  "metadata": {
+    "title": "TECHNOVOLT - Électricité Générale & Domotique à Tataouine",
+    "description": "TECHNOVOLT, votre expert en solutions électriques et domotique à Tataouine, Tunisie. Installation, réparation, maintenance électrique, climatisation et maison intelligente."
+  },
+  "nav": {
+    "home": "Accueil",
+    "services": "Services",
+    "projects": "Réalisations",
+    "about": "À Propos",
+    "reviews": "Avis Clients",
+    "contact": "Contact",
+    "requestQuote": "Demander un Devis",
+    "admin": "Administration"
+  },
+  "hero": {
+    "title": "Votre Expert en Solutions Électriques & Domotique",
+    "subtitle": "Installation, réparation et maintenance électrique pour particuliers et professionnels à Tataouine et ses environs. Qualité, fiabilité et prix compétitifs.",
+    "cta": "Demander un Devis Gratuit",
+    "ctaWhatsapp": "Contactez-nous sur WhatsApp",
+    "tagline": "Électricité générale | Domotique"
+  },
+  "services": {
+    "title": "Nos Services",
+    "subtitle": "Des solutions électriques complètes pour tous vos besoins résidentiels et commerciaux",
+    "learnMore": "En savoir plus",
+    "requestQuote": "Demander un devis",
+    "allServices": "Tous les services",
+    "startingFrom": "À partir de",
+    "categories": {
+      "electrical_installation": "Installation Électrique",
+      "electrical_repair": "Réparation Électrique",
+      "electrical_maintenance": "Maintenance Électrique",
+      "lighting": "Éclairage",
+      "electrical_panel": "Tableau Électrique",
+      "ac_installation": "Installation Climatisation",
+      "ac_servicing": "Entretien Climatisation",
+      "ac_repair": "Réparation Climatisation",
+      "water_heater_installation": "Installation Chauffe-eau",
+      "water_heater_repair": "Réparation Chauffe-eau",
+      "home_automation": "Domotique & Maison Intelligente",
+      "general_maintenance": "Maintenance Générale"
+    }
+  },
+  "whyUs": {
+    "title": "Pourquoi Choisir TECHNOVOLT ?",
+    "subtitle": "Des raisons concrètes de nous faire confiance pour vos travaux électriques",
+    "points": {
+      "experience": {
+        "title": "Expérience Confirmée",
+        "description": "Une équipe de techniciens qualifiés avec des années d'expérience dans le domaine électrique et la domotique."
+      },
+      "quality": {
+        "title": "Qualité Garantie",
+        "description": "Nous utilisons uniquement des matériaux et équipements de qualité supérieure pour des installations durables et sécurisées."
+      },
+      "availability": {
+        "title": "Disponibilité & Réactivité",
+        "description": "Intervention rapide et disponibilité pour répondre à vos urgences électriques dans les meilleurs délais."
+      },
+      "pricing": {
+        "title": "Prix Compétitifs",
+        "description": "Des tarifs transparents et compétitifs, avec des devis gratuits et détaillés avant chaque intervention."
+      },
+      "guarantee": {
+        "title": "Garantie de Satisfaction",
+        "description": "Nous garantissons la qualité de nos interventions et assurons un suivi après chaque projet réalisé."
+      },
+      "local": {
+        "title": "Proximité Locale",
+        "description": "Basés à Tataouine, nous connaissons parfaitement les besoins de notre région et intervenons rapidement."
+      }
+    }
+  },
+  "projects": {
+    "title": "Nos Réalisations",
+    "subtitle": "Découvrez quelques-uns de nos projets récents et le travail que nous réalisons au quotidien",
+    "viewAll": "Voir toutes les réalisations",
+    "viewProject": "Voir le projet",
+    "beforeAfter": "Avant / Après",
+    "completedOn": "Réalisé le",
+    "category": "Catégorie",
+    "noProjects": "Aucun projet à afficher pour le moment."
+  },
+  "howItWorks": {
+    "title": "Comment Ça Marche ?",
+    "subtitle": "Un processus simple et transparent en 6 étapes pour vos travaux électriques",
+    "steps": {
+      "contact": {
+        "title": "Contactez-nous",
+        "description": "Appelez-nous, envoyez un message WhatsApp ou remplissez le formulaire en ligne pour nous décrire votre besoin."
+      },
+      "explain": {
+        "title": "Décrivez votre besoin",
+        "description": "Expliquez-nous en détail le travail souhaité : type d'intervention, localisation, et toute information utile."
+      },
+      "quote": {
+        "title": "Recevez votre devis",
+        "description": "Nous vous envoyons un devis détaillé et gratuit dans les plus brefs délais après étude de votre demande."
+      },
+      "confirm": {
+        "title": "Confirmez le rendez-vous",
+        "description": "Une fois le devis accepté, nous fixons ensemble une date d'intervention qui vous convient."
+      },
+      "work": {
+        "title": "Réalisation des travaux",
+        "description": "Notre équipe intervient avec professionnalisme, propreté et dans le respect des normes de sécurité."
+      },
+      "followUp": {
+        "title": "Suivi & Garantie",
+        "description": "Après les travaux, nous assurons un suivi et restons disponibles pour toute question ou ajustement."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "Ce Que Disent Nos Clients",
+    "subtitle": "Les avis de nos clients sont notre meilleure publicité",
+    "noReviews": "Aucun avis client pour le moment. Soyez le premier à partager votre expérience !"
+  },
+  "faq": {
+    "title": "Questions Fréquentes",
+    "subtitle": "Retrouvez les réponses aux questions les plus courantes sur nos services"
+  },
+  "cta": {
+    "title": "Besoin d'un Électricien de Confiance ?",
+    "subtitle": "Contactez-nous dès aujourd'hui pour un devis gratuit et sans engagement. Nous sommes à votre écoute !",
+    "button": "Demander un Devis Gratuit",
+    "whatsapp": "Nous Écrire sur WhatsApp"
+  },
+  "contact": {
+    "title": "Contactez-nous",
+    "subtitle": "Nous sommes à votre disposition pour répondre à toutes vos questions et demandes",
+    "form": {
+      "name": "Nom complet",
+      "phone": "Numéro de téléphone",
+      "email": "Adresse e-mail",
+      "service": "Service souhaité",
+      "message": "Votre message",
+      "preferredContact": "Moyen de contact préféré",
+      "preferredDate": "Date souhaitée",
+      "submit": "Envoyer le message",
+      "sending": "Envoi en cours...",
+      "success": "Message envoyé avec succès !",
+      "successMessage": "Merci pour votre message. Nous vous répondrons dans les plus brefs délais.",
+      "error": "Une erreur est survenue. Veuillez réessayer ou nous contacter directement.",
+      "consent": "J'accepte que mes données soient utilisées pour traiter ma demande conformément à la politique de confidentialité."
+    },
+    "info": {
+      "phone": "Téléphone",
+      "whatsapp": "WhatsApp",
+      "email": "E-mail",
+      "address": "Adresse",
+      "hours": "Horaires de travail",
+      "hoursValue": "Lun - Sam : 8h00 - 18h00"
+    }
+  },
+  "quote": {
+    "title": "Demande de Devis",
+    "subtitle": "Remplissez le formulaire ci-dessous pour recevoir un devis gratuit et personnalisé",
+    "form": {
+      "name": "Nom complet",
+      "phone": "Numéro de téléphone",
+      "email": "Adresse e-mail (optionnel)",
+      "service": "Type de service",
+      "description": "Description détaillée des travaux",
+      "address": "Adresse du lieu d'intervention",
+      "preferredDate": "Date souhaitée",
+      "preferredTime": "Heure préférée",
+      "photos": "Photos du lieu / du problème",
+      "photosHint": "Ajoutez des photos pour nous aider à mieux évaluer votre demande (max 5 photos)",
+      "preferredContact": "Moyen de contact préféré",
+      "consent": "J'accepte que mes données soient utilisées pour traiter ma demande de devis conformément à la politique de confidentialité.",
+      "submit": "Envoyer la demande de devis",
+      "sending": "Envoi en cours..."
+    },
+    "success": {
+      "title": "Demande envoyée avec succès !",
+      "message": "Merci pour votre demande de devis. Notre équipe l'examinera et vous contactera dans les 24 heures.",
+      "reference": "Numéro de référence",
+      "whatsapp": "Nous contacter sur WhatsApp pour un suivi rapide",
+      "backHome": "Retour à l'accueil"
+    }
+  },
+  "about": {
+    "title": "À Propos de TECHNOVOLT",
+    "subtitle": "Votre partenaire de confiance pour tous vos besoins en électricité et domotique à Tataouine",
+    "mission": {
+      "title": "Notre Mission",
+      "content": "Fournir des solutions électriques fiables, sécurisées et innovantes aux particuliers et professionnels de Tataouine et sa région. Nous nous engageons à offrir un service de qualité supérieure à des prix accessibles."
+    },
+    "values": {
+      "title": "Nos Valeurs",
+      "content": "Professionnalisme, intégrité, qualité et satisfaction client sont les piliers qui guident chacune de nos interventions. Nous traitons chaque projet avec le même soin et la même attention aux détails."
+    },
+    "serviceArea": {
+      "title": "Zone d'Intervention",
+      "content": "Nous intervenons à Tataouine et dans toute la région environnante. N'hésitez pas à nous contacter pour vérifier si votre localité est couverte par nos services."
+    }
+  },
+  "footer": {
+    "description": "TECHNOVOLT — Électricité générale et domotique à Tataouine. Votre expert en solutions électriques pour particuliers et professionnels.",
+    "quickLinks": "Liens Rapides",
+    "ourServices": "Nos Services",
+    "contactInfo": "Informations de Contact",
+    "privacy": "Politique de Confidentialité",
+    "terms": "Conditions Générales",
+    "legal": "Mentions Légales",
+    "copyright": "© {year} TECHNOVOLT.",
+    "allRights": "Tous droits réservés."
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer",
+    "yes": "Oui",
+    "no": "Non",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "close": "Fermer",
+    "open": "Ouvrir",
+    "selectLanguage": "Choisir la langue",
+    "noResults": "Aucun résultat trouvé",
+    "showMore": "Voir plus",
+    "showLess": "Voir moins",
+    "readMore": "Lire la suite",
+    "viewDetails": "Voir les détails",
+    "tnd": "DT",
+    "currency": "TND"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Veuillez saisir une adresse e-mail valide",
+    "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
+    "minLength": "Ce champ doit contenir au moins {min} caractères",
+    "maxLength": "Ce champ ne doit pas dépasser {max} caractères",
+    "invalidDate": "Veuillez saisir une date valide"
+  },
+  "breadcrumbs": {
+    "home": "Accueil",
+    "services": "Services",
+    "projects": "Réalisations",
+    "about": "À Propos",
+    "contact": "Contact",
+    "quote": "Demande de Devis"
+  }
+}
