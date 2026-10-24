@@ -41,14 +41,7 @@ export default function ClientDashboardPage() {
       } = await supabase.auth.getUser();
 
       if (!currentUser) {
-        // Allow visitor preview or redirect
-        setUser({ email: "client.tataouine@technovolt.tn" });
-        setProfile({
-          full_name: "Client TECHNOVOLT",
-          role: "client",
-          phone: "+216 90 000 000",
-        });
-        setLoading(false);
+        router.push("/client/login");
         return;
       }
 

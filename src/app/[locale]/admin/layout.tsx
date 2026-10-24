@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Link, usePathname } from "@/i18n/routing";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   Inbox,
@@ -25,8 +26,9 @@ import {
   Menu,
   X,
   ExternalLink,
-  Shield,
-  Zap,
+  LogOut,
+  Loader2,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -35,7 +37,71 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [adminUser, setAdminUser] = useState<any>(null);
+
+  const isLoginPage = pathname.includes("/admin/login");
+
+  useEffect(() => {
+    if (isLoginPage) {
+      setAuthorized(true);
+      return;
+    }
+
+    const checkAdminAuth = async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          router.push("/admin/login");
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, full_name")
+          .eq("id", user.id)
+          .single();
+
+        if (profile && ["super_admin", "owner", "admin", "manager"].includes(profile.role)) {
+          setAdminUser({ ...user, profile });
+          setAuthorized(true);
+        } else {
+          router.push("/admin/login");
+        }
+      } catch {
+        router.push("/admin/login");
+      }
+    };
+
+    checkAdminAuth();
+  }, [pathname, isLoginPage, router]);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+  };
+
+  // If on login page, render page directly without administrative chrome
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  // Loading gate
+  if (authorized === null) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-[#F5A623]" />
+        <p className="text-sm font-medium text-slate-300">Vérification des accréditations administratives...</p>
+      </div>
+    );
+  }
 
   const menuSections = [
     {
@@ -134,17 +200,28 @@ export default function AdminLayout({
             <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
           </Link>
 
-          <div className="flex items-center gap-2 border-s border-slate-200 ps-4">
+          <div className="flex items-center gap-3 border-s border-slate-200 ps-4">
             <div className="h-8 w-8 rounded-full bg-[#1B3A6B] text-white flex items-center justify-center text-xs font-bold">
-              TV
+              {adminUser?.profile?.full_name?.slice(0, 2).toUpperCase() || "TV"}
             </div>
             <div className="hidden md:block text-start">
-              <div className="text-xs font-bold text-slate-900">Admin TECHNOVOLT</div>
+              <div className="text-xs font-bold text-slate-900 truncate max-w-[120px]">
+                {adminUser?.profile?.full_name || "Admin"}
+              </div>
               <div className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Tataouine &bull; Connecté</span>
+                <span>{adminUser?.profile?.role || "Habilité"}</span>
               </div>
             </div>
+
+            <button
+              onClick={handleSignOut}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              title="Déconnexion"
+              aria-label="Déconnexion"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </header>
@@ -168,7 +245,7 @@ export default function AdminLayout({
                       className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                         active
                           ? "bg-[#1B3A6B] text-white shadow-xs font-semibold"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          : "text-slate-600 hover:bg-slate-100"
                       }`}
                     >
                       <span className="flex items-center gap-2.5">
@@ -176,13 +253,7 @@ export default function AdminLayout({
                         <span>{item.label}</span>
                       </span>
                       {item.badge && (
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                            active
-                              ? "bg-[#F5A623] text-slate-900"
-                              : "bg-slate-200 text-slate-700"
-                          }`}
-                        >
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
                           {item.badge}
                         </span>
                       )}
@@ -193,30 +264,34 @@ export default function AdminLayout({
             ))}
           </div>
 
-          <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-3 text-xs text-slate-600 space-y-1">
-            <div className="font-semibold text-slate-900 flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Système Sécurisé</span>
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Devise par défaut : <strong>TND (Dinar Tunisien)</strong>
-            </p>
+          <div className="pt-4 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-emerald-700 font-medium">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <span>Accès Sécurisé</span>
+            </span>
+            <button
+              onClick={handleSignOut}
+              className="text-xs text-rose-600 hover:underline flex items-center gap-1"
+            >
+              <LogOut className="h-3 w-3" />
+              <span>Quitter</span>
+            </button>
           </div>
         </aside>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Flyout Drawer */}
         {sidebarOpen && (
-          <div className="fixed inset-0 z-40 lg:hidden flex">
+          <div className="fixed inset-0 z-40 lg:hidden">
             <div
-              className="fixed inset-0 bg-black/40 backdrop-blur-xs"
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="relative w-72 bg-white p-4 flex flex-col space-y-6 shadow-xl z-50 overflow-y-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="fixed inset-y-0 start-0 w-72 bg-white p-4 shadow-xl z-50 flex flex-col overflow-y-auto space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <span className="font-bold text-slate-900 text-sm">Navigation Admin</span>
                 <button
                   onClick={() => setSidebarOpen(false)}
-                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
                 >
                   <X className="h-5 w-5" />
                 </button>
