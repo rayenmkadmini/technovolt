@@ -156,7 +156,7 @@ export default async function HomePage({
                     style={{ position: "relative" }}
                   >
                     <Image
-                      src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop"
+                      src="/images/projects/technovolt-chantier-01.jpg"
                       alt="TECHNOVOLT Électricité générale et domotique"
                       fill
                       priority
@@ -587,6 +587,34 @@ export default async function HomePage({
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Worksite Photos Gallery Strip */}
+            <div className="mt-12 rounded-2xl bg-[#1B3A6B] text-white p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
+              <div className="space-y-2 text-center md:text-start">
+                <span className="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#F5A623] text-slate-900">
+                  {locale === "ar" ? "معرض الصور الكامل" : "74 Photos de Chantiers Réels"}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-bold">
+                  {locale === "ar"
+                    ? "استكشف معرض صور أعمالنا الميدانية في تطاوين"
+                    : "Découvrez notre galerie de 74 photos de travaux récents"}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+                  {locale === "ar"
+                    ? "أعمال تمديد الكابلات، تركيب الخزانات الكهربائية، سبوتات الليد وتوصيلات التكييف بالصور."
+                    : "Armoires modulaires, câblages sous conduits, éclairage architectural et installations de climatisation."}
+                </p>
+              </div>
+
+              <Link href="/projects" className="shrink-0">
+                <Button variant="secondary" size="lg" className="font-bold text-slate-900 gap-2">
+                  <span>
+                    {locale === "ar" ? "فتح معرض الصور (74)" : "Ouvrir la Galerie (74 photos)"}
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

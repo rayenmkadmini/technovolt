@@ -82,7 +82,7 @@ export default async function AboutPage({
                 style={{ position: "relative" }}
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=800&auto=format&fit=crop"
+                  src="/images/projects/technovolt-chantier-02.jpg"
                   alt="TECHNOVOLT Électricité générale et domotique à Tataouine"
                   fill
                   className="object-cover"
