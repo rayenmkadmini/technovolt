@@ -45,7 +45,10 @@ export default async function ProjectsPage({
                 key={proj.id}
                 className="group rounded-2xl overflow-hidden border border-slate-200/80 bg-white shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
               >
-                <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                <div
+                  className="relative aspect-[16/10] overflow-hidden bg-slate-100"
+                  style={{ position: "relative" }}
+                >
                   <Image
                     src={proj.cover_image}
                     alt={proj.title || "Projet TECHNOVOLT"}

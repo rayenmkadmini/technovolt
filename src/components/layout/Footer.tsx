@@ -23,7 +23,10 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Col 1: Identity & Brand */}
           <div className="space-y-4">
-            <div className="relative h-14 w-48 overflow-hidden rounded bg-white/10 p-1.5 flex items-center">
+            <div
+              className="relative h-14 w-48 overflow-hidden rounded bg-white/10 p-1.5 flex items-center"
+              style={{ position: "relative" }}
+            >
               <Image
                 src="/logo.jpg"
                 alt="TECHNOVOLT"

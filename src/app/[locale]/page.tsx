@@ -132,7 +132,10 @@ export default async function HomePage({
               {/* Right Column: Hero Visual Card with Brand Logo */}
               <div className="lg:col-span-5 relative">
                 <div className="relative mx-auto max-w-md lg:max-w-none rounded-2xl overflow-hidden border border-white/20 bg-white/5 backdrop-blur-xl p-4 shadow-2xl">
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800">
+                  <div
+                    className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800"
+                    style={{ position: "relative" }}
+                  >
                     <Image
                       src="/logo.jpg"
                       alt="TECHNOVOLT Électricité générale et domotique"
@@ -189,7 +192,10 @@ export default async function HomePage({
                   key={service.id}
                   className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-slate-200/80 flex flex-col"
                 >
-                  <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                  <div
+                    className="relative aspect-[16/10] overflow-hidden bg-slate-100"
+                    style={{ position: "relative" }}
+                  >
                     <Image
                       src={service.cover_image}
                       alt={service.title || "Service TECHNOVOLT"}
@@ -359,7 +365,10 @@ export default async function HomePage({
                   key={proj.id}
                   className="group relative rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
                 >
-                  <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                  <div
+                    className="relative aspect-[16/10] overflow-hidden bg-slate-100"
+                    style={{ position: "relative" }}
+                  >
                     <Image
                       src={proj.cover_image}
                       alt={proj.title || "Projet TECHNOVOLT"}

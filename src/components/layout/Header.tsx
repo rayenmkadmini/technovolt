@@ -67,7 +67,10 @@ export function Header() {
         <div className="flex h-20 items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative h-12 w-36 sm:h-14 sm:w-44 overflow-hidden rounded-md flex items-center">
+            <div
+              className="relative h-12 w-36 sm:h-14 sm:w-44 overflow-hidden rounded-md flex items-center"
+              style={{ position: "relative" }}
+            >
               <Image
                 src="/logo.jpg"
                 alt="TECHNOVOLT Logo"

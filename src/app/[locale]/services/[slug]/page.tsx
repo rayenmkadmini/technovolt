@@ -87,7 +87,10 @@ export default async function ServiceDetailPage({
             {/* Main Content Area */}
             <div className="lg:col-span-8 space-y-10">
               {/* Cover Image */}
-              <div className="relative aspect-[16/9] rounded-2xl overflow-hidden shadow-md bg-slate-100">
+              <div
+                className="relative aspect-[16/9] rounded-2xl overflow-hidden shadow-md bg-slate-100"
+                style={{ position: "relative" }}
+              >
                 <Image
                   src={service.cover_image}
                   alt={service.title || "Service TECHNOVOLT"}

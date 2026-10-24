@@ -55,7 +55,10 @@ export default async function ServicesPage({
                 id={service.category}
                 className="group flex flex-col overflow-hidden hover:shadow-xl transition-all duration-300 border-slate-200/80 bg-white"
               >
-                <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                <div
+                  className="relative aspect-[16/10] overflow-hidden bg-slate-100"
+                  style={{ position: "relative" }}
+                >
                   <Image
                     src={service.cover_image}
                     alt={service.title || "Service TECHNOVOLT"}
