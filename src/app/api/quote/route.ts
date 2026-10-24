@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         preferred_date: preferredDate || null,
         preferred_time: preferredTime || null,
         preferred_contact: preferredContact || "phone",
-        source: "website_quote_form",
+        source: "website",
         status: "new",
       });
     } catch (dbErr) {

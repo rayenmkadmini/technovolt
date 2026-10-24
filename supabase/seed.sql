@@ -6,11 +6,9 @@
 -- All demo records are marked and realistic for Tataouine, Tunisia.
 -- ============================================================================
 
--- 1. Insert Company Settings
-INSERT INTO public.company_settings (id, settings)
-VALUES (
-  '00000000-0000-0000-0000-000000000001',
-  '{
+-- 1. Update Company Settings
+UPDATE public.company_settings
+SET settings = '{
     "company_name": "TECHNOVOLT",
     "tagline": "Électricité générale | Domotique",
     "tagline_ar": "كهرباء عامة | أنظمة تحكم ذكي",
@@ -28,9 +26,7 @@ VALUES (
     "logo_url": "/logo.jpg",
     "default_tax_rate": 19.0,
     "currency": "TND"
-  }'::jsonb
-)
-ON CONFLICT (id) DO UPDATE SET settings = EXCLUDED.settings;
+  }'::jsonb;
 
 -- 2. Expense Categories
 INSERT INTO public.expense_categories (name, name_fr, name_ar, name_en, icon, is_system, is_active)
@@ -70,8 +66,8 @@ ON CONFLICT (id) DO NOTHING;
 -- 6. Demo Leads
 INSERT INTO public.leads (id, reference_number, full_name, phone, email, message, address, source, status, preferred_contact)
 VALUES
-  ('00000000-0000-0000-0000-000000000040', 'DEV-QT-2604-9X', 'Ali Dridi', '+216 95 333 444', 'ali.dridi@yahoo.fr', 'Installation tableau divisionnaire et 12 points lumineux pour villa neuve.', 'Tataouine — Cité El Mahrajane', 'website_quote_form', 'new', 'phone'),
-  ('00000000-0000-0000-0000-000000000041', 'DEV-CT-2604-4K', 'Fatma Gheriani', '+216 50 112 233', 'fatma.gh@outlook.com', 'Panne générale suite orage hier soir. Disjoncteur principal refuse de remonter.', 'Tataouine Centre', 'website_contact', 'contacted', 'whatsapp')
+  ('00000000-0000-0000-0000-000000000040', 'DEV-QT-2604-9X', 'Ali Dridi', '+216 95 333 444', 'ali.dridi@yahoo.fr', 'Installation tableau divisionnaire et 12 points lumineux pour villa neuve.', 'Tataouine — Cité El Mahrajane', 'website', 'new', 'phone'),
+  ('00000000-0000-0000-0000-000000000041', 'DEV-CT-2604-4K', 'Fatma Gheriani', '+216 50 112 233', 'fatma.gh@outlook.com', 'Panne générale suite orage hier soir. Disjoncteur principal refuse de remonter.', 'Tataouine Centre', 'website', 'contacted', 'whatsapp')
 ON CONFLICT (id) DO NOTHING;
 
 -- 7. Demo Appointments

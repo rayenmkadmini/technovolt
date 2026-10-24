@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         phone,
         email: email || null,
         message: message || "",
-        source: "website_contact",
+        source: "website",
         preferred_contact: preferredContact || "phone",
         status: "new",
       });
