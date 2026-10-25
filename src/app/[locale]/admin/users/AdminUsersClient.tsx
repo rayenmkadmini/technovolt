@@ -5,12 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import {
-  Users,
   Shield,
   Plus,
-  Key,
   CheckCircle2,
-  Lock,
   Trash2,
   X,
 } from "lucide-react";
@@ -52,29 +49,6 @@ const ROLE_PERMS: Record<string, string> = {
   client: "Consultation devis & factures personnelles, demande d'intervention",
 };
 
-const initialUsers: UserItem[] = [
-  {
-    id: "usr-00",
-    fullName: "Rayen Mkadmini (Super Admin)",
-    email: "rayen25360@gmail.com",
-    role: "super_admin",
-    roleLabel: "Super Admin",
-    status: "active",
-    lastLogin: "Session active (Connecté)",
-    permissions: "Accès Total Illimité (Super Administrateur, Rôles, Supabase, RLS, Finances, CMS)",
-  },
-  {
-    id: "usr-04",
-    fullName: "Client Tataouine (Portail Client)",
-    email: "client.tataouine@technovolt.tn",
-    role: "client",
-    roleLabel: "Client",
-    status: "active",
-    lastLogin: "Aujourd'hui à 11:20",
-    permissions: "Consultation devis & factures personnelles, demande d'intervention",
-  },
-];
-
 interface AdminUsersClientProps {
   initialUsers: UserItem[];
 }
@@ -91,9 +65,9 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setTimeout(() => setUsers(parsed), 0);
         }
       }
@@ -111,6 +85,7 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
     setUsers(newUsers);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newUsers));
+      window.dispatchEvent(new Event("storage"));
     } catch (e) {
       console.error("Failed to save users", e);
     }

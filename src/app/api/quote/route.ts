@@ -33,7 +33,9 @@ export async function POST(req: NextRequest) {
         full_name: name,
         phone,
         email: email || null,
-        message: description || "",
+        message: description
+          ? `[Prestation: ${serviceId || "Générale"}] ${description}`
+          : (serviceId ? `[Prestation: ${serviceId}]` : ""),
         address: address || "Tataouine",
         preferred_date: preferredDate || null,
         preferred_time: preferredTime || null,

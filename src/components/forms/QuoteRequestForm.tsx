@@ -12,9 +12,6 @@ import {
   MessageSquare,
   ArrowLeft,
   Loader2,
-  Calendar,
-  Clock,
-  MapPin,
 } from "lucide-react";
 
 export function QuoteRequestForm({

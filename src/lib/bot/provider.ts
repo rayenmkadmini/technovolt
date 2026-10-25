@@ -11,10 +11,7 @@ import {
   analyzeUserQuery,
 } from "./prompt.ts";
 import {
-  TUNISIAN_ELECTRICAL_CATALOGUE,
-  ELECTRICAL_SAFETY_GUIDELINES,
   searchCatalogue,
-  type ElectricalProduct,
 } from "./knowledge.ts";
 
 export type BotLocale = "fr" | "ar" | "en" | "derja" | "arabizi";

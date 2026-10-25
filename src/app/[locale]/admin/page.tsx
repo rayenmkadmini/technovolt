@@ -26,7 +26,6 @@ import {
   AlertCircle,
   ArrowUpRight,
   Clock,
-  CheckCircle2,
   Phone,
   Plus,
 } from "lucide-react";

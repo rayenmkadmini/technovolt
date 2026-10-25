@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { Link, useRouter } from "@/i18n/routing";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/Button";
@@ -18,10 +17,7 @@ import {
   Phone,
   MessageSquare,
   CheckCircle2,
-  Clock,
   Zap,
-  ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -64,13 +60,28 @@ export default function ClientDashboardPage() {
     }
 
     loadUser();
-  }, []);
+  }, [router]);
 
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <div className="h-10 w-10 border-4 border-[#0B69FF] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm text-slate-500 font-medium">Chargement de votre espace client...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const sampleQuotes = [
     {

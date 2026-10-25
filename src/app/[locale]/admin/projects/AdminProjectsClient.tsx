@@ -47,9 +47,9 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setTimeout(() => {
             setProjects(parsed);
           }, 0);
@@ -92,6 +92,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
     setProjects(newProjects);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newProjects));
+      window.dispatchEvent(new Event("storage"));
     } catch (e) {
       console.error("Failed to save projects to localStorage", e);
     }

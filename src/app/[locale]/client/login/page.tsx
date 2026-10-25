@@ -12,10 +12,8 @@ import {
   Lock,
   Mail,
   ArrowRight,
-  UserCheck,
   Loader2,
   AlertCircle,
-  FileText,
   ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";

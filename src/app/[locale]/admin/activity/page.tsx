@@ -3,10 +3,7 @@ import {
   Activity,
   FileText,
   CreditCard,
-  User,
   Settings,
-  Clock,
-  ShieldAlert,
 } from "lucide-react";
 
 const auditLogs = [

@@ -6,14 +6,12 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ClientCounter } from "@/components/home/ClientCounter";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
 import {
   Zap,
   ShieldCheck,
   Clock,
-  Wrench,
   CheckCircle2,
   ArrowRight,
   Phone,
@@ -21,7 +19,6 @@ import {
   MessageSquare,
   HelpCircle,
   FileCheck,
-  Sparkles,
   MapPin,
   ChevronRight,
 } from "lucide-react";
@@ -38,9 +35,6 @@ export default async function HomePage({
   const tServices = await getTranslations("services");
   const tWhy = await getTranslations("whyUs");
   const tHow = await getTranslations("howItWorks");
-  const tFaq = await getTranslations("faq");
-  const tCta = await getTranslations("cta");
-  const tCommon = await getTranslations("common");
 
   const [services, projects, settings] = await Promise.all([
     getServices(locale),

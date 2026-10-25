@@ -8,7 +8,6 @@ import {
   Star,
   CheckCircle2,
   XCircle,
-  Clock,
   Plus,
   ShieldCheck,
   Trash2,
@@ -73,6 +72,10 @@ export default function AdminReviewsPage() {
     setReviews(
       reviews.map((r) => (r.id === id ? { ...r, status } : r))
     );
+  };
+
+  const handleDeleteReview = (id: string) => {
+    setReviews(reviews.filter((r) => r.id !== id));
   };
 
   const handleAddReview = (e: React.FormEvent) => {
@@ -279,6 +282,13 @@ export default function AdminReviewsPage() {
                         <XCircle className="h-4 w-4" />
                       </button>
                     )}
+                    <button
+                      onClick={() => handleDeleteReview(rev.id)}
+                      className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
+                      title="Supprimer l'avis"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}

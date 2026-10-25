@@ -9,12 +9,8 @@ import {
   Phone,
   Mail,
   MapPin,
-  Calendar,
-  MessageSquare,
   FileText,
-  UserCheck,
   Search,
-  Filter,
 } from "lucide-react";
 
 export default async function AdminLeadsPage({

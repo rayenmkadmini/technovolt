@@ -87,7 +87,7 @@ const techniciansList = [
   "Équipe Technique Chantier",
 ];
 
-export function AdminWorkOrdersClient({ locale: _locale }: { locale: string }) {
+export function AdminWorkOrdersClient({ locale }: { locale: string }) {
   const [workOrders, setWorkOrders] = useState<WorkOrderItem[]>(initialDemoWorkOrders);
   const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string }[]>(
     defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone }))
@@ -422,7 +422,7 @@ export function AdminWorkOrdersClient({ locale: _locale }: { locale: string }) {
                     {wo.completion_date && <div className="text-slate-400 text-[11px]">Au: {wo.completion_date}</div>}
                   </td>
                   <td className="py-3 px-4 text-end font-semibold text-slate-800">{wo.labor_hours} h</td>
-                  <td className="py-3 px-4 text-end font-bold text-slate-900">{formatCurrency(wo.total_cost)}</td>
+                  <td className="py-3 px-4 text-end font-bold text-slate-900">{formatCurrency(wo.total_cost, locale)}</td>
                   <td className="py-3 px-4 text-slate-700 font-medium">{wo.technician_name || "—"}</td>
                   <td className="py-3 px-4 text-end">
                     <button

@@ -1,12 +1,11 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { getServiceBySlug, getServices } from "@/lib/data/services";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -15,9 +14,7 @@ import {
   Clock,
   ShieldCheck,
   ChevronRight,
-  HelpCircle,
   PhoneCall,
-  ArrowRight,
 } from "lucide-react";
 
 export default async function ServiceDetailPage({
@@ -36,7 +33,6 @@ export default async function ServiceDetailPage({
 
   const allServices = await getServices(locale);
   const relatedServices = allServices.filter((s) => s.slug !== slug).slice(0, 3);
-  const tServices = await getTranslations("services");
 
   // Schema.org structured data
   const jsonLd = {

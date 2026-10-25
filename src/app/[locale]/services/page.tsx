@@ -9,12 +9,8 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
 import {
-  Zap,
-  Clock,
-  ShieldCheck,
   CheckCircle2,
   ChevronRight,
-  ArrowRight,
 } from "lucide-react";
 
 export default async function ServicesPage({

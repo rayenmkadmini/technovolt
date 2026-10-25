@@ -11,7 +11,6 @@ import {
   Clock,
   MessageSquare,
   ShieldCheck,
-  CheckCircle2,
 } from "lucide-react";
 
 export default async function ContactPage({

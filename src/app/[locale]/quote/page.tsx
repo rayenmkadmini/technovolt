@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { QuoteRequestForm } from "@/components/forms/QuoteRequestForm";
 import { getServices } from "@/lib/data/services";
 import { Badge } from "@/components/ui/Badge";
-import { Zap, ShieldCheck, Clock, FileCheck } from "lucide-react";
+import { ShieldCheck, Clock, FileCheck } from "lucide-react";
 
 export default async function QuotePage({
   params,

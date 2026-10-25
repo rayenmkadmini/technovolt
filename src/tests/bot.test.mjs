@@ -4,10 +4,8 @@ import assert from "node:assert/strict";
 import {
   analyzeUserQuery,
   OUT_OF_SCOPE_RESPONSES,
-  EMERGENCY_ALERT,
 } from "../lib/bot/prompt.ts";
 import {
-  TUNISIAN_ELECTRICAL_CATALOGUE,
   searchCatalogue,
 } from "../lib/bot/knowledge.ts";
 import {

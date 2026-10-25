@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import {
   Globe,
   Save,
   CheckCircle2,
-  Search,
-  ExternalLink,
 } from "lucide-react";
 
 interface SeoPageConfig {

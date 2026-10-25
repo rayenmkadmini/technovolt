@@ -50,9 +50,15 @@ export function FloatingClientCounter() {
     };
   }, []);
 
-  // Hide on admin and login pages
+  // Hide on admin, login, and registration pages
   if (!mounted) return null;
-  if (pathname?.includes("/admin")) return null;
+  if (
+    pathname?.includes("/admin") ||
+    pathname?.includes("/login") ||
+    pathname?.includes("/register")
+  ) {
+    return null;
+  }
   if (!config.enabled) return null;
 
   const sideClass = config.side === "right" ? "right-4 sm:right-6" : "left-4 sm:left-6";

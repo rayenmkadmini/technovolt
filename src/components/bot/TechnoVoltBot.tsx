@@ -16,7 +16,6 @@ import {
   Sparkles,
   ShieldCheck,
   MessageSquare,
-  Bot,
 } from "lucide-react";
 
 interface Message {
@@ -54,8 +53,9 @@ export function TechnoVoltBot() {
 
   // Initialize welcome message once
   useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([
+    setMessages((prev) => {
+      if (prev.length > 0) return prev;
+      return [
         {
           id: "welcome-msg",
           role: "assistant",
@@ -67,8 +67,8 @@ export function TechnoVoltBot() {
             t("suggestedQuestions.5"),
           ],
         },
-      ]);
-    }
+      ];
+    });
   }, [locale, t]);
 
   // Auto-scroll to bottom of messages
@@ -176,7 +176,7 @@ export function TechnoVoltBot() {
             xhr.ontimeout = () => reject(new Error("Délai d'attente réseau dépassé."));
             xhr.timeout = 25000;
             xhr.send(JSON.stringify(payload));
-          } catch (xhrErr) {
+          } catch {
             reject(fetchErr);
           }
         });

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         full_name: name,
         phone,
         email: email || null,
-        message: message || "",
+        message: service ? `[Service: ${service}] ${message || ""}`.trim() : (message || ""),
         source: "website",
         preferred_contact: preferredContact || "phone",
         status: "new",
