@@ -31,6 +31,45 @@ export default function AdminSettingsPage() {
   const [counterAnimated, setCounterAnimated] = useState(true);
   const [counterSaved, setCounterSaved] = useState(false);
 
+  // Floating counter config
+  const [floatEnabled, setFloatEnabled] = useState(true);
+  const [floatPrefix, setFloatPrefix] = useState("+");
+  const [floatValue, setFloatValue] = useState(500);
+  const [floatLabel, setFloatLabel] = useState("Clients");
+  const [floatSide, setFloatSide] = useState<"left" | "right">("left");
+  const [floatBottom, setFloatBottom] = useState(24);
+  const [floatSaved, setFloatSaved] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("technovolt_floating_counter");
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (typeof c.enabled === "boolean") setFloatEnabled(c.enabled);
+        if (typeof c.prefix === "string") setFloatPrefix(c.prefix);
+        if (typeof c.value === "number") setFloatValue(c.value);
+        if (typeof c.label === "string") setFloatLabel(c.label);
+        if (c.side === "left" || c.side === "right") setFloatSide(c.side);
+        if (typeof c.bottom === "number") setFloatBottom(c.bottom);
+      }
+    } catch {}
+  }, []);
+
+  const handleSaveFloat = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cfg = {
+      enabled: floatEnabled,
+      prefix: floatPrefix,
+      value: Number(floatValue) || 0,
+      label: floatLabel,
+      side: floatSide,
+      bottom: Number(floatBottom) || 24,
+    };
+    localStorage.setItem("technovolt_floating_counter", JSON.stringify(cfg));
+    setFloatSaved(true);
+    setTimeout(() => setFloatSaved(false), 3000);
+  };
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("technovolt_client_counter");
@@ -388,6 +427,63 @@ export default function AdminSettingsPage() {
               <Button type="submit" variant="default" size="sm" className="gap-2 font-bold">
                 <Save className="h-4 w-4" />
                 <span>Enregistrer le Compteur</span>
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        {/* Floating Client Counter Section */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 className="text-base font-bold text-slate-900">Compteur Flottant (toujours visible)</h2>
+            {floatSaved && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Enregistré !</span>
+              </span>
+            )}
+          </div>
+          <form onSubmit={handleSaveFloat} className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input type="checkbox" id="float-enabled" checked={floatEnabled} onChange={(e) => setFloatEnabled(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-[#0B69FF] focus:ring-[#0B69FF]" />
+              <label htmlFor="float-enabled" className="text-xs font-semibold text-slate-700 cursor-pointer">Activer le compteur flottant</label>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Préfixe</label>
+                <Input value={floatPrefix} onChange={(e) => setFloatPrefix(e.target.value)} placeholder="+" className="h-10 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nombre</label>
+                <Input type="number" value={floatValue} onChange={(e) => setFloatValue(Number(e.target.value))} placeholder="500" className="h-10 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Libellé</label>
+                <Input value={floatLabel} onChange={(e) => setFloatLabel(e.target.value)} placeholder="Clients" className="h-10 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Côté</label>
+                <select value={floatSide} onChange={(e) => setFloatSide(e.target.value as "left" | "right")} className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white">
+                  <option value="left">Gauche</option>
+                  <option value="right">Droite</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Position verticale (px)</label>
+                <Input type="number" value={floatBottom} onChange={(e) => setFloatBottom(Number(e.target.value))} placeholder="24" className="h-10 text-sm" />
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+              <div className="text-xs text-slate-500 uppercase font-semibold mb-2">Aperçu</div>
+              <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#0B69FF] text-white shadow-lg">
+                <span className="text-lg font-black">{floatPrefix}{Number(floatValue || 0).toLocaleString("fr-FR")}</span>
+                <span className="text-xs font-semibold text-white/90">{floatLabel}</span>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" variant="default" size="sm" className="gap-2 font-bold">
+                <Save className="h-4 w-4" />
+                <span>Enregistrer le Compteur Flottant</span>
               </Button>
             </div>
           </form>

@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { routing, type Locale } from "@/i18n/routing";
 import { TechnoVoltBot } from "@/components/bot/TechnoVoltBot";
+import { FloatingClientCounter } from "@/components/home/FloatingClientCounter";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -161,6 +162,7 @@ export default async function LocaleLayout({
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
+          <FloatingClientCounter />
           <TechnoVoltBot />
         </NextIntlClientProvider>
       </body>
