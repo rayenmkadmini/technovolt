@@ -32,7 +32,10 @@ export default function NewInvoicePage() {
   const [dueDate, setDueDate] = useState(() =>
     new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
-  const [taxRate, setTaxRate] = useState(19.0);
+  const [taxRate] = useState(19.0);
+  const [invoiceNumber] = useState(() => {
+    return `FAC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  });
   const [paymentTerms, setPaymentTerms] = useState(
     "Paiement par virement bancaire ou chèque à l'ordre de TECHNOVOLT sous 15 jours."
   );
@@ -93,17 +96,60 @@ export default function NewInvoicePage() {
   const taxAmount = (subtotalHT * taxRate) / 100;
   const totalTTC = subtotalHT + taxAmount;
 
-  const invoiceNumber = "FAC-2026-0040";
-
   const handlePrint = () => {
     window.print();
   };
 
   const handleSave = () => {
+    if (!customerName.trim()) {
+      alert("Veuillez saisir le nom du client.");
+      return;
+    }
+    const validItems = items.filter((it) => it.description.trim() && it.quantity > 0);
+    if (validItems.length === 0) {
+      alert("Veuillez renseigner au moins une prestation valide.");
+      return;
+    }
+
+    const newInvoice = {
+      id: `inv-${Date.now()}`,
+      invoice_number: invoiceNumber,
+      customer_name: customerName.trim(),
+      customer_phone: customerPhone.trim(),
+      customer_address: customerAddress.trim(),
+      issue_date: issueDate,
+      due_date: dueDate,
+      subtotal: subtotalHT,
+      tax_rate: taxRate,
+      tax_amount: taxAmount,
+      total: totalTTC,
+      amount_paid: 0,
+      balance_due: totalTTC,
+      status: "issued" as const,
+      items: validItems,
+      payment_terms: paymentTerms,
+      created_at: new Date().toISOString(),
+    };
+
+    try {
+      const STORAGE_KEY = "technovolt_admin_invoices";
+      const existing = localStorage.getItem(STORAGE_KEY);
+      let list = [];
+      if (existing) {
+        try {
+          const parsed = JSON.parse(existing);
+          if (Array.isArray(parsed)) list = parsed;
+        } catch {}
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([newInvoice, ...list]));
+    } catch (e) {
+      console.error("Failed to persist invoice", e);
+    }
+
     setSavedSuccess(true);
     setTimeout(() => {
       router.push("/admin/invoices");
-    }, 1500);
+    }, 1200);
   };
 
   return (

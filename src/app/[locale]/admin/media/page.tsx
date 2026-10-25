@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -11,10 +10,9 @@ import {
   X,
   Trash2,
   Folder,
-  Eye,
   Copy,
   Check,
-  Search,
+  AlertCircle,
 } from "lucide-react";
 
 interface MediaItem {
@@ -71,6 +69,8 @@ const initialMedia: MediaItem[] = [
   },
 ];
 
+const STORAGE_KEY = "technovolt_admin_media";
+
 export default function AdminMediaPage() {
   const [mediaList, setMediaList] = useState<MediaItem[]>(initialMedia);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
@@ -78,11 +78,38 @@ export default function AdminMediaPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formName, setFormName] = useState("");
   const [formUrl, setFormUrl] = useState("");
+  const [formPreview, setFormPreview] = useState<string | null>(null);
   const [formAltFr, setFormAltFr] = useState("");
   const [formFolder, setFormFolder] = useState("Chantiers");
+  const [formSize, setFormSize] = useState("-");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const folders = ["all", "Branding", "Chantiers", "Climatisation", "Domotique"];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMediaList(parsed);
+          }
+        }
+      } catch {}
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const saveMediaList = (next: MediaItem[]) => {
+    setMediaList(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+  };
 
   const filteredMedia =
     selectedFolder === "all"
@@ -97,8 +124,88 @@ export default function AdminMediaPage() {
 
   const deleteMedia = (id: string) => {
     if (confirm("Supprimer ce fichier média ?")) {
-      setMediaList(mediaList.filter((m) => m.id !== id));
+      saveMediaList(mediaList.filter((m) => m.id !== id));
+      setToastMessage("Fichier supprimé.");
+      setTimeout(() => setToastMessage(null), 3000);
     }
+  };
+
+  const handleProcessFile = (file: File) => {
+    setErrorMsg(null);
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+    if (!validTypes.includes(file.type)) {
+      setErrorMsg("Format d'image non valide. Veuillez importer un fichier PNG, JPG, WebP ou SVG.");
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxSize) {
+      setErrorMsg("Le fichier est trop volumineux. La taille maximale autorisée est de 5 Mo.");
+      return;
+    }
+
+    const kbSize = Math.round(file.size / 1024) + " KB";
+    setFormSize(kbSize);
+    if (!formName) {
+      setFormName(file.name);
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (typeof e.target?.result === "string") {
+        setFormPreview(e.target.result);
+        setFormUrl(e.target.result);
+      }
+    };
+    reader.onerror = () => {
+      setErrorMsg("Erreur lors de la lecture du fichier.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      handleProcessFile(file);
+    }
+  };
+
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || !formUrl.trim()) {
+      setErrorMsg("Veuillez sélectionner un fichier ou indiquer une URL.");
+      return;
+    }
+    const newItem: MediaItem = {
+      id: `med-${Date.now()}`,
+      name: formName.trim(),
+      url: formUrl.trim(),
+      size: formSize,
+      folder: formFolder,
+      altTextFr: formAltFr.trim() || formName.trim(),
+      altTextAr: "",
+      uploadedAt: new Date().toISOString().slice(0, 10),
+    };
+    saveMediaList([newItem, ...mediaList]);
+    setToastMessage("Fichier ajouté avec succès !");
+    setTimeout(() => setToastMessage(null), 3500);
+    setIsModalOpen(false);
+    setFormName("");
+    setFormUrl("");
+    setFormPreview(null);
+    setFormAltFr("");
+    setErrorMsg(null);
   };
 
   return (
@@ -115,7 +222,16 @@ export default function AdminMediaPage() {
           </p>
         </div>
 
-        <Button variant="default" size="sm" className="gap-1.5 font-semibold text-xs" onClick={() => setIsModalOpen(true)}>
+        <Button
+          variant="default"
+          size="sm"
+          className="gap-1.5 font-semibold text-xs"
+          onClick={() => {
+            setErrorMsg(null);
+            setFormPreview(null);
+            setIsModalOpen(true);
+          }}
+        >
           <Upload className="h-4 w-4" />
           <span>Téléverser un Fichier</span>
         </Button>
@@ -152,6 +268,7 @@ export default function AdminMediaPage() {
                 src={item.url}
                 alt={item.altTextFr}
                 fill
+                unoptimized
                 sizes="(max-width: 768px) 100vw, 25vw"
                 className="object-cover"
               />
@@ -206,81 +323,156 @@ export default function AdminMediaPage() {
             </div>
           </div>
         ))}
-      </div>
-
-    {isModalOpen && (
-      <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Upload className="h-5 w-5 text-[#0B69FF]" />
-              <span>Téléverser un Fichier</span>
-            </h3>
-            <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100">
-              <X className="h-5 w-5" />
-            </button>
+        {filteredMedia.length === 0 && (
+          <div className="col-span-full py-16 text-center text-slate-400 text-sm">
+            Aucun fichier média dans ce dossier.
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!formName.trim() || !formUrl.trim()) {
-                alert("Veuillez saisir le nom et l'URL du fichier.");
-                return;
-              }
-              const newItem: MediaItem = {
-                id: `med-${Date.now()}`,
-                name: formName.trim(),
-                url: formUrl.trim(),
-                size: "-",
-                folder: formFolder,
-                altTextFr: formAltFr.trim(),
-                altTextAr: "",
-                uploadedAt: new Date().toISOString().slice(0, 10),
-              };
-              setMediaList([newItem, ...mediaList]);
-              setToastMessage("Fichier ajouté avec succès !");
-              setTimeout(() => setToastMessage(null), 3500);
-              setIsModalOpen(false);
-              setFormName("");
-              setFormUrl("");
-              setFormAltFr("");
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Nom du fichier *</label>
-              <Input required value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="ex: photo-chantier.jpg" className="h-10 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">URL / chemin du fichier *</label>
-              <Input required value={formUrl} onChange={(e) => setFormUrl(e.target.value)} placeholder="/images/projects/..." className="h-10 text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Dossier</label>
-              <select value={formFolder} onChange={(e) => setFormFolder(e.target.value)} className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white">
-                {["Branding", "Chantiers", "Climatisation", "Domotique"].map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Texte alternatif (FR)</label>
-              <Input value={formAltFr} onChange={(e) => setFormAltFr(e.target.value)} placeholder="Description de l'image" className="h-10 text-sm" />
-            </div>
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs font-medium">Annuler</Button>
-              <Button type="submit" variant="default" className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]">Ajouter</Button>
-            </div>
-          </form>
-        </div>
+        )}
       </div>
-    )}
 
-    {toastMessage && (
-      <div className="fixed bottom-5 end-5 z-50 bg-[#0B69FF] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold animate-in fade-in slide-in-from-bottom-2">
-        <span>{toastMessage}</span>
-      </div>
-    )}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Upload className="h-5 w-5 text-[#0B69FF]" />
+                <span>Téléverser un Fichier Média</span>
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+              {/* Drag and Drop Zone */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Sélectionner un fichier (depuis l'appareil ou glisser-déposer)
+                </label>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleProcessFile(file);
+                  }}
+                  className="hidden"
+                />
+
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors ${
+                    isDragging
+                      ? "border-[#0B69FF] bg-blue-50/50"
+                      : "border-slate-300 hover:border-[#0B69FF] bg-slate-50/50 hover:bg-slate-50"
+                  }`}
+                >
+                  <Upload className={`h-8 w-8 mx-auto mb-2 ${isDragging ? "text-[#0B69FF]" : "text-slate-400"}`} />
+                  <p className="text-xs font-semibold text-slate-700">
+                    Glissez une image ici ou <span className="text-[#0B69FF] underline">parcourez vos fichiers</span>
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    PNG, JPG, WebP ou SVG (Max. 5 Mo)
+                  </p>
+                </div>
+              </div>
+
+              {formPreview && (
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-4">
+                  <div className="relative h-14 w-20 rounded bg-white overflow-hidden border border-slate-200">
+                    <Image
+                      src={formPreview}
+                      alt="Aperçu"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="text-xs">
+                    <span className="font-bold text-slate-800 block truncate max-w-xs">{formName}</span>
+                    <span className="text-slate-500 font-mono text-[10px]">{formSize}</span>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nom du fichier *</label>
+                <Input
+                  required
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="ex: tableau-electrique-villa.jpg"
+                  className="h-10 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Dossier de classement</label>
+                <select
+                  value={formFolder}
+                  onChange={(e) => setFormFolder(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white"
+                >
+                  {["Branding", "Chantiers", "Climatisation", "Domotique"].map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Texte alternatif (SEO & Accessibilité)</label>
+                <Input
+                  value={formAltFr}
+                  onChange={(e) => setFormAltFr(e.target.value)}
+                  placeholder="Description détaillée de la photo"
+                  className="h-10 text-sm"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-xs font-medium"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  variant="default"
+                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
+                >
+                  Enregistrer l'image
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {toastMessage && (
+        <div className="fixed bottom-5 end-5 z-50 bg-[#0B69FF] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold animate-in fade-in slide-in-from-bottom-2">
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }

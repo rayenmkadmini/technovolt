@@ -1,6 +1,7 @@
 /**
  * Client-side CSV export utility with UTF-8 BOM support
- * for perfect Arabic and French characters rendering in Excel.
+ * for perfect Arabic and French characters rendering in Excel,
+ * with CSV/formula injection sanitization (CWE-1236).
  */
 export function exportToCsv(
   filename: string,
@@ -8,8 +9,17 @@ export function exportToCsv(
   rows: (string | number)[][]
 ) {
   const escapeCell = (val: string | number) => {
-    const stringVal = String(val ?? "");
-    if (stringVal.includes(",") || stringVal.includes('"') || stringVal.includes("\n")) {
+    let stringVal = String(val ?? "");
+    // Neutralize CSV / formula injection (cells starting with =, +, -, @, tab, or CR)
+    if (/^[=+\-@\t\r]/.test(stringVal)) {
+      stringVal = `'${stringVal}`;
+    }
+    if (
+      stringVal.includes(",") ||
+      stringVal.includes('"') ||
+      stringVal.includes("\n") ||
+      stringVal.includes(";")
+    ) {
       return `"${stringVal.replace(/"/g, '""')}"`;
     }
     return stringVal;
@@ -32,3 +42,4 @@ export function exportToCsv(
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+

@@ -43,13 +43,18 @@ export function ClientCounter() {
   const animatedRef = useRef(false);
 
   useEffect(() => {
-    setConfig(loadConfig());
+    const timer = setTimeout(() => {
+      setConfig(loadConfig());
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!config.enabled || !config.animated) {
-      setDisplayValue(config.value);
-      return;
+      const timer = setTimeout(() => {
+        setDisplayValue(config.value);
+      }, 0);
+      return () => clearTimeout(timer);
     }
     if (!ref.current) return;
     const observer = new IntersectionObserver(

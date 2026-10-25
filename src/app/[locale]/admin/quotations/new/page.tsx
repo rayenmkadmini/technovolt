@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Link, useRouter } from "@/i18n/routing";
-import { initialCustomers } from "@/lib/data/adminStore";
-import { formatCurrency, generateReference } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import {
@@ -13,7 +12,6 @@ import {
   Printer,
   ArrowLeft,
   CheckCircle2,
-  Calculator,
 } from "lucide-react";
 
 interface LineItem {
@@ -34,8 +32,11 @@ export default function NewQuotationPage() {
   const [validUntil, setValidUntil] = useState(() =>
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
   );
-  const [taxRate, setTaxRate] = useState(19.0);
-  const [discountAmount, setDiscountAmount] = useState(0.0);
+  const [taxRate] = useState(19.0);
+  const [discountAmount] = useState(0.0);
+  const [quotationNumber] = useState(
+    () => `DEV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+  );
   const [terms, setTerms] = useState(
     "Devis valable 30 jours. Acompte de 40% à la commande, solde à la réception des travaux."
   );
@@ -98,17 +99,58 @@ export default function NewQuotationPage() {
   const taxAmount = (taxableBase * taxRate) / 100;
   const totalTTC = taxableBase + taxAmount;
 
-  const quotationNumber = "DEV-2026-0044";
-
   const handlePrint = () => {
     window.print();
   };
 
   const handleSave = () => {
+    if (!customerName.trim()) {
+      alert("Veuillez saisir le nom du client.");
+      return;
+    }
+    const validItems = items.filter((it) => it.description.trim() && it.quantity > 0);
+    if (validItems.length === 0) {
+      alert("Veuillez saisir au moins une ligne de prestation.");
+      return;
+    }
+
+    const newQuotation = {
+      id: `quot-${Date.now()}`,
+      quotation_number: quotationNumber,
+      customer_name: customerName.trim(),
+      customer_phone: customerPhone.trim(),
+      customer_address: customerAddress.trim(),
+      issue_date: issueDate,
+      valid_until: validUntil,
+      subtotal: subtotalHT,
+      discount_amount: discountAmount,
+      tax_amount: taxAmount,
+      total: totalTTC,
+      status: "sent" as const,
+      items: validItems,
+      terms,
+      created_at: new Date().toISOString(),
+    };
+
+    try {
+      const STORAGE_KEY = "technovolt_admin_quotations";
+      const existing = localStorage.getItem(STORAGE_KEY);
+      let list = [];
+      if (existing) {
+        try {
+          const parsed = JSON.parse(existing);
+          if (Array.isArray(parsed)) list = parsed;
+        } catch {}
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([newQuotation, ...list]));
+    } catch (e) {
+      console.error("Failed to persist quotation:", e);
+    }
+
     setSavedSuccess(true);
     setTimeout(() => {
       router.push("/admin/quotations");
-    }, 1500);
+    }, 1200);
   };
 
   return (

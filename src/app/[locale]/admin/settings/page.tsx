@@ -1,25 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { defaultCompanySettings } from "@/lib/data/initialData";
 import { Button } from "@/components/ui/Button";
-import { Input, Textarea } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
 import {
   Settings,
   Save,
   CheckCircle2,
-  Phone,
-  MessageSquare,
-  Mail,
-  MapPin,
-  Clock,
-  Percent,
+  Upload,
+  RefreshCw,
+  AlertCircle,
+  ImageIcon,
 } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState(defaultCompanySettings);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Logo management state
+  const [logoUrl, setLogoUrl] = useState("/logo.png");
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [logoSaved, setLogoSaved] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Client counter config
   const [counterEnabled, setCounterEnabled] = useState(true);
@@ -41,19 +47,118 @@ export default function AdminSettingsPage() {
   const [floatSaved, setFloatSaved] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("technovolt_floating_counter");
-      if (raw) {
-        const c = JSON.parse(raw);
-        if (typeof c.enabled === "boolean") setFloatEnabled(c.enabled);
-        if (typeof c.prefix === "string") setFloatPrefix(c.prefix);
-        if (typeof c.value === "number") setFloatValue(c.value);
-        if (typeof c.label === "string") setFloatLabel(c.label);
-        if (c.side === "left" || c.side === "right") setFloatSide(c.side);
-        if (typeof c.bottom === "number") setFloatBottom(c.bottom);
-      }
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        const storedLogo = localStorage.getItem("technovolt_company_logo");
+        if (storedLogo) setLogoUrl(storedLogo);
+
+        const storedSettings = localStorage.getItem("technovolt_company_settings");
+        if (storedSettings) setSettings(JSON.parse(storedSettings));
+
+        const rawFloat = localStorage.getItem("technovolt_floating_counter");
+        if (rawFloat) {
+          const c = JSON.parse(rawFloat);
+          if (typeof c.enabled === "boolean") setFloatEnabled(c.enabled);
+          if (typeof c.prefix === "string") setFloatPrefix(c.prefix);
+          if (typeof c.value === "number") setFloatValue(c.value);
+          if (typeof c.label === "string") setFloatLabel(c.label);
+          if (c.side === "left" || c.side === "right") setFloatSide(c.side);
+          if (typeof c.bottom === "number") setFloatBottom(c.bottom);
+        }
+
+        const rawCounter = localStorage.getItem("technovolt_client_counter");
+        if (rawCounter) {
+          const c = JSON.parse(rawCounter);
+          if (typeof c.enabled === "boolean") setCounterEnabled(c.enabled);
+          if (typeof c.prefix === "string") setCounterPrefix(c.prefix);
+          if (typeof c.value === "number") setCounterValue(c.value);
+          if (typeof c.label === "string") setCounterLabel(c.label);
+          if (typeof c.title === "string") setCounterTitle(c.title);
+          if (typeof c.description === "string") setCounterDescription(c.description);
+          if (typeof c.animated === "boolean") setCounterAnimated(c.animated);
+        }
+      } catch {}
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
+
+  const processLogoFile = (file: File) => {
+    setLogoError(null);
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+    if (!validTypes.includes(file.type)) {
+      setLogoError("Format d'image non valide. Veuillez importer un fichier PNG, JPG, WebP ou SVG.");
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024; // 5 MB
+    if (file.size > maxSize) {
+      setLogoError("Le fichier est trop volumineux. La taille maximale autorisée est de 5 Mo.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (typeof ev.target?.result === "string") {
+        setLogoPreview(ev.target.result);
+      }
+    };
+    reader.onerror = () => {
+      setLogoError("Échec de la lecture du fichier image.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processLogoFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processLogoFile(file);
+    }
+  };
+
+  const handleSaveLogo = () => {
+    if (!logoPreview) return;
+    try {
+      localStorage.setItem("technovolt_company_logo", logoPreview);
+      setLogoUrl(logoPreview);
+      setLogoPreview(null);
+      setLogoSaved(true);
+      window.dispatchEvent(new Event("storage"));
+      setTimeout(() => setLogoSaved(false), 3000);
+    } catch {
+      setLogoError("Erreur lors de l'enregistrement du logo.");
+    }
+  };
+
+  const handleResetLogo = () => {
+    try {
+      localStorage.removeItem("technovolt_company_logo");
+      setLogoUrl("/logo.png");
+      setLogoPreview(null);
+      setLogoSaved(true);
+      window.dispatchEvent(new Event("storage"));
+      setTimeout(() => setLogoSaved(false), 3000);
+    } catch {}
+  };
 
   const handleSaveFloat = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,25 +171,10 @@ export default function AdminSettingsPage() {
       bottom: Number(floatBottom) || 24,
     };
     localStorage.setItem("technovolt_floating_counter", JSON.stringify(cfg));
+    window.dispatchEvent(new Event("storage"));
     setFloatSaved(true);
     setTimeout(() => setFloatSaved(false), 3000);
   };
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("technovolt_client_counter");
-      if (raw) {
-        const c = JSON.parse(raw);
-        if (typeof c.enabled === "boolean") setCounterEnabled(c.enabled);
-        if (typeof c.prefix === "string") setCounterPrefix(c.prefix);
-        if (typeof c.value === "number") setCounterValue(c.value);
-        if (typeof c.label === "string") setCounterLabel(c.label);
-        if (typeof c.title === "string") setCounterTitle(c.title);
-        if (typeof c.description === "string") setCounterDescription(c.description);
-        if (typeof c.animated === "boolean") setCounterAnimated(c.animated);
-      }
-    } catch {}
-  }, []);
 
   const handleSaveCounter = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,12 +188,16 @@ export default function AdminSettingsPage() {
       animated: counterAnimated,
     };
     localStorage.setItem("technovolt_client_counter", JSON.stringify(cfg));
+    window.dispatchEvent(new Event("storage"));
     setCounterSaved(true);
     setTimeout(() => setCounterSaved(false), 3000);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      localStorage.setItem("technovolt_company_settings", JSON.stringify(settings));
+    } catch {}
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
@@ -118,7 +212,7 @@ export default function AdminSettingsPage() {
             <span>Paramètres de l'Entreprise (CMS Configuration)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Coordonnées publiques, WhatsApp, horaires et paramètres fiscaux de TECHNOVOLT
+            Coordonnées publiques, WhatsApp, logo officiel et paramètres fiscaux de TECHNOVOLT
           </p>
         </div>
 
@@ -128,6 +222,140 @@ export default function AdminSettingsPage() {
             <span>Modifications enregistrées !</span>
           </span>
         )}
+      </div>
+
+      {/* Logo Management Section */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 space-y-6 shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5 text-[#0B69FF]" />
+            <h2 className="text-base font-bold text-slate-900">
+              Logo de l'Entreprise & Identité Visuelle
+            </h2>
+          </div>
+          {logoSaved && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Logo mis à jour !</span>
+            </span>
+          )}
+        </div>
+
+        {logoError && (
+          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+            <span>{logoError}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          {/* Current Logo Preview */}
+          <div className="space-y-3">
+            <label className="block text-xs font-semibold text-slate-700">
+              Logo Actuel
+            </label>
+            <div className="h-28 rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center relative overflow-hidden">
+              <div className="relative h-16 w-52">
+                <Image
+                  src={logoUrl}
+                  alt="Logo TECHNOVOLT"
+                  fill
+                  unoptimized
+                  className="object-contain"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>Affiché sur l'en-tête, le pied de page et les devis/factures.</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetLogo}
+                className="text-[11px] h-7 gap-1 text-slate-600 hover:text-slate-900"
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span>Réinitialiser</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Upload / Drag and Drop Area */}
+          <div className="space-y-3">
+            <label className="block text-xs font-semibold text-slate-700">
+              Modifier le Logo (Glisser-déposer ou sélectionner)
+            </label>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onChange={handleLogoFileChange}
+              className="hidden"
+            />
+
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`h-28 rounded-xl border-2 border-dashed p-4 flex flex-col items-center justify-center cursor-pointer transition-colors text-center ${
+                isDragging
+                  ? "border-[#0B69FF] bg-blue-50/50"
+                  : "border-slate-300 hover:border-[#0B69FF] bg-slate-50/50 hover:bg-slate-50"
+              }`}
+            >
+              <Upload className={`h-6 w-6 mb-1 ${isDragging ? "text-[#0B69FF]" : "text-slate-400"}`} />
+              <p className="text-xs font-semibold text-slate-700">
+                Glissez votre nouveau logo ici ou <span className="text-[#0B69FF] underline">parcourez l'appareil</span>
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                PNG, JPG, WebP ou SVG (Max. 5 Mo)
+              </p>
+            </div>
+
+            {logoPreview && (
+              <div className="p-3 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-10 w-24 rounded bg-white p-1 border border-slate-200">
+                    <Image
+                      src={logoPreview}
+                      alt="Aperçu logo"
+                      fill
+                      unoptimized
+                      className="object-contain"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block">Nouvel aperçu prêt</span>
+                    <span className="text-[10px] text-slate-500">Confirmez pour appliquer le changement</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLogoPreview(null)}
+                    className="text-xs h-8"
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveLogo}
+                    className="text-xs h-8 font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
+                  >
+                    Enregistrer le logo
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
@@ -148,24 +376,15 @@ export default function AdminSettingsPage() {
                 className="font-bold text-sm"
               />
             </div>
-
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Logo de l'Entreprise (Actuel)
+                Immatriculation Fiscale / RC
               </label>
-              <div className="flex items-center gap-4">
-                <div className="relative h-12 w-36 rounded border border-slate-200 overflow-hidden bg-slate-50">
-                  <Image
-                    src="/logo.jpg"
-                    alt="Logo"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <span className="text-xs text-slate-500">
-                  Logo officiel TECHNOVOLT
-                </span>
-              </div>
+              <Input
+                value={settings.tax_number || "MF: 1234567/X/A/M/000"}
+                onChange={(e) => setSettings({ ...settings, tax_number: e.target.value })}
+                className="text-sm font-mono"
+              />
             </div>
           </div>
 
@@ -362,7 +581,7 @@ export default function AdminSettingsPage() {
             )}
           </div>
 
-          <form onSubmit={handleSaveCounter} className="space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -424,12 +643,12 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" variant="default" size="sm" className="gap-2 font-bold">
+              <Button type="button" onClick={handleSaveCounter} variant="default" size="sm" className="gap-2 font-bold">
                 <Save className="h-4 w-4" />
                 <span>Enregistrer le Compteur</span>
               </Button>
             </div>
-          </form>
+          </div>
         </div>
 
         {/* Floating Client Counter Section */}
@@ -443,7 +662,7 @@ export default function AdminSettingsPage() {
               </span>
             )}
           </div>
-          <form onSubmit={handleSaveFloat} className="space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <input type="checkbox" id="float-enabled" checked={floatEnabled} onChange={(e) => setFloatEnabled(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-[#0B69FF] focus:ring-[#0B69FF]" />
               <label htmlFor="float-enabled" className="text-xs font-semibold text-slate-700 cursor-pointer">Activer le compteur flottant</label>
@@ -481,12 +700,12 @@ export default function AdminSettingsPage() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" variant="default" size="sm" className="gap-2 font-bold">
+              <Button type="button" onClick={handleSaveFloat} variant="default" size="sm" className="gap-2 font-bold">
                 <Save className="h-4 w-4" />
                 <span>Enregistrer le Compteur Flottant</span>
               </Button>
             </div>
-          </form>
+          </div>
         </div>
 
         {/* Action Button */}

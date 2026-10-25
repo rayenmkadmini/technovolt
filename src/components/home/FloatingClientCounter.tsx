@@ -38,11 +38,16 @@ export function FloatingClientCounter() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setConfig(load());
+    const timer = setTimeout(() => {
+      setMounted(true);
+      setConfig(load());
+    }, 0);
     const onStorage = () => setConfig(load());
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   // Hide on admin and login pages

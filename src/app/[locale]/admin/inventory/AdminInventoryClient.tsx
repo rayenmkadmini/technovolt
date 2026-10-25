@@ -3,15 +3,16 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
+import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import {
   Package,
   Plus,
-  Tag,
   Trash2,
   X,
   CheckCircle2,
+  AlertCircle,
+  Search,
 } from "lucide-react";
 
 export interface ProductItem {
@@ -30,32 +31,85 @@ export interface ProductItem {
 
 const STORAGE_KEY = "technovolt_admin_products";
 
+const defaultDemoProducts: ProductItem[] = [
+  {
+    id: "prod-01",
+    sku: "DISJ-SCHN-16A",
+    name: "Disjoncteur modulaire 16A Courbe C Schneider",
+    category: "Tableaux & Protections",
+    purchase_cost: 9.5,
+    sale_price: 14.5,
+    quantity: 35,
+    low_stock_threshold: 10,
+    unit: "pièce",
+    is_active: true,
+    created_at: "2026-10-10T08:00:00Z",
+  },
+  {
+    id: "prod-02",
+    sku: "DIFF-SCHN-40A",
+    name: "Interrupteur différentiel 40A 30mA Type AC",
+    category: "Tableaux & Protections",
+    purchase_cost: 42.0,
+    sale_price: 58.0,
+    quantity: 12,
+    low_stock_threshold: 5,
+    unit: "pièce",
+    is_active: true,
+    created_at: "2026-10-10T08:00:00Z",
+  },
+  {
+    id: "prod-03",
+    sku: "CAB-R2V-3G25",
+    name: "Câble cuivre rigide R2V 3G 2.5 mm² (couronne 100m)",
+    category: "Câbles & Conducteurs",
+    purchase_cost: 165.0,
+    sale_price: 215.0,
+    quantity: 8,
+    low_stock_threshold: 3,
+    unit: "couronne",
+    is_active: true,
+    created_at: "2026-10-12T09:00:00Z",
+  },
+];
+
 interface Props {
   initialProducts: ProductItem[];
 }
 
 export function AdminInventoryClient({ initialProducts }: Props) {
-  const [products, setProducts] = useState<ProductItem[]>(initialProducts);
+  const [products, setProducts] = useState<ProductItem[]>(
+    initialProducts.length > 0 ? initialProducts : defaultDemoProducts
+  );
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formName, setFormName] = useState("");
   const [formSku, setFormSku] = useState("");
-  const [formCategory, setFormCategory] = useState("");
+  const [formCategory, setFormCategory] = useState("Tableaux & Protections");
   const [formPurchase, setFormPurchase] = useState("");
   const [formSale, setFormSale] = useState("");
   const [formQty, setFormQty] = useState("");
-  const [formThreshold, setFormThreshold] = useState("");
+  const [formThreshold, setFormThreshold] = useState("5");
   const [formUnit, setFormUnit] = useState("pièce");
+  const [formError, setFormError] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) setTimeout(() => setProducts(parsed), 0);
-      }
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+            return;
+          }
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoProducts));
+      } catch {}
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const showToast = (msg: string) => {
@@ -74,34 +128,49 @@ export function AdminInventoryClient({ initialProducts }: Props) {
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     if (!formName.trim() || !formSku.trim()) {
-      alert("Veuillez saisir le nom et la référence SKU.");
+      setFormError("Veuillez saisir le nom de l'article et sa référence SKU.");
       return;
     }
+
+    const qty = parseInt(formQty, 10);
+    const purchase = parseFloat(formPurchase);
+    const sale = parseFloat(formSale);
+    const threshold = parseInt(formThreshold, 10);
+
+    if (isNaN(qty) || qty < 0) {
+      setFormError("La quantité en stock doit être un entier positif ou nul.");
+      return;
+    }
+
     const newProd: ProductItem = {
       id: `prod-${Date.now()}`,
       sku: formSku.trim(),
       name: formName.trim(),
       category: formCategory.trim() || "Général",
-      purchase_cost: Number(formPurchase) || 0,
-      sale_price: Number(formSale) || 0,
-      quantity: Number(formQty) || 0,
-      low_stock_threshold: Number(formThreshold) || 0,
+      purchase_cost: !isNaN(purchase) && purchase >= 0 ? purchase : 0,
+      sale_price: !isNaN(sale) && sale >= 0 ? sale : 0,
+      quantity: qty,
+      low_stock_threshold: !isNaN(threshold) && threshold >= 0 ? threshold : 0,
       unit: formUnit,
       is_active: true,
       created_at: new Date().toISOString(),
     };
+
     save([newProd, ...products]);
-    showToast("Article ajouté avec succès !");
+    showToast("Article ajouté au stock avec succès !");
     setIsModalOpen(false);
     setFormName("");
     setFormSku("");
-    setFormCategory("");
+    setFormCategory("Tableaux & Protections");
     setFormPurchase("");
     setFormSale("");
     setFormQty("");
-    setFormThreshold("");
+    setFormThreshold("5");
     setFormUnit("pièce");
+    setFormError(null);
   };
 
   const handleDelete = (id: string) => {
@@ -109,6 +178,14 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     setDeleteConfirmId(null);
     showToast("Article supprimé.");
   };
+
+  const filteredProducts = products.filter((prod) => {
+    return (
+      prod.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prod.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      prod.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -119,20 +196,64 @@ export function AdminInventoryClient({ initialProducts }: Props) {
         </div>
       )}
 
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
             <Package className="h-6 w-6 text-[#0B69FF]" />
-            <span>Stock & Matériel</span>
+            <span>Stock & Fournitures Matériel</span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Inventaire des fournitures électriques, outillage et fluides frigorigènes</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Inventaire des fournitures électriques, outillage et fluides à Tataouine
+          </p>
         </div>
-        <Button variant="default" size="sm" className="gap-1.5 font-semibold text-xs" onClick={() => setIsModalOpen(true)}>
-          <Plus className="h-4 w-4" />
-          <span>Ajouter un Article</span>
-        </Button>
+
+        <div className="flex items-center gap-3">
+          <ExportCsvButton
+            filename="stock-inventaire-technovolt"
+            label="Exporter CSV"
+            headers={["Code SKU", "Désignation", "Catégorie", "Prix Achat (TND)", "Prix Vente (TND)", "Quantité", "Unité", "Seuil Alerte"]}
+            rows={filteredProducts.map((p) => [
+              p.sku,
+              p.name,
+              p.category,
+              p.purchase_cost,
+              p.sale_price,
+              p.quantity,
+              p.unit,
+              p.low_stock_threshold,
+            ])}
+          />
+
+          <Button
+            variant="default"
+            size="sm"
+            className="gap-1.5 font-semibold text-xs bg-[#0B69FF] hover:bg-[#094FC9]"
+            onClick={() => {
+              setFormError(null);
+              setIsModalOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Ajouter un Article</span>
+          </Button>
+        </div>
       </div>
 
+      {/* Search */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute start-3 top-2.5 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Rechercher article, SKU ou catégorie..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="ps-9 h-9 text-xs"
+          />
+        </div>
+      </div>
+
+      {/* Inventory Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-start text-xs text-slate-700">
@@ -144,30 +265,44 @@ export function AdminInventoryClient({ initialProducts }: Props) {
                 <th className="px-4 py-3.5 text-end">Prix Achat</th>
                 <th className="px-4 py-3.5 text-end">Prix Vente</th>
                 <th className="px-4 py-3.5 text-center">Quantité</th>
-                <th className="px-4 py-3.5 text-center">Seuil</th>
+                <th className="px-4 py-3.5 text-center">Seuil Alerte</th>
                 <th className="px-4 py-3.5 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products.map((prod) => (
+              {filteredProducts.map((prod) => (
                 <tr key={prod.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-4 py-4 font-mono text-[11px] text-slate-500">{prod.sku}</td>
+                  <td className="px-4 py-4 font-mono text-[11px] text-[#0B69FF] font-semibold">{prod.sku}</td>
                   <td className="px-4 py-4 font-bold text-slate-900 text-sm">{prod.name}</td>
                   <td className="px-4 py-4 text-slate-600">{prod.category}</td>
                   <td className="px-4 py-4 text-end font-mono">{formatCurrency(prod.purchase_cost, "fr")}</td>
-                  <td className="px-4 py-4 text-end font-mono">{formatCurrency(prod.sale_price, "fr")}</td>
-                  <td className="px-4 py-4 text-center font-bold">{prod.quantity}</td>
-                  <td className="px-4 py-4 text-center text-slate-500">{prod.low_stock_threshold}</td>
+                  <td className="px-4 py-4 text-end font-mono font-semibold">{formatCurrency(prod.sale_price, "fr")}</td>
+                  <td className="px-4 py-4 text-center font-bold">
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded ${
+                        prod.quantity <= prod.low_stock_threshold
+                          ? "bg-rose-100 text-rose-800"
+                          : "bg-slate-100 text-slate-800"
+                      }`}
+                    >
+                      {prod.quantity} {prod.unit}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 text-center text-slate-500 font-mono">{prod.low_stock_threshold}</td>
                   <td className="px-4 py-4 text-center">
-                    <button onClick={() => setDeleteConfirmId(prod.id)} className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 transition-colors" title="Supprimer">
+                    <button
+                      onClick={() => setDeleteConfirmId(prod.id)}
+                      className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 transition-colors"
+                      title="Supprimer"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && (
+              {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-slate-400 text-xs">Aucun article.</td>
+                  <td colSpan={8} className="text-center py-12 text-slate-400 text-xs">Aucun article trouvé.</td>
                 </tr>
               )}
             </tbody>
@@ -175,64 +310,149 @@ export function AdminInventoryClient({ initialProducts }: Props) {
         </div>
       </div>
 
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Plus className="h-5 w-5 text-[#0B69FF]" />
-                <span>Ajouter un Article</span>
+                <span>Ajouter un Article au Stock</span>
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
+
+            {formError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                <span>{formError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleAdd} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Nom *</label>
-                <Input required value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Disjoncteur 16A" className="h-10 text-sm" />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nom / Désignation *</label>
+                <Input
+                  required
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="Ex: Disjoncteur modulaire 16A"
+                  className="h-10 text-sm"
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Référence SKU *</label>
-                <Input required value={formSku} onChange={(e) => setFormSku(e.target.value)} placeholder="Ex: DISJ-16A" className="h-10 text-sm" />
+                <Input
+                  required
+                  value={formSku}
+                  onChange={(e) => setFormSku(e.target.value)}
+                  placeholder="Ex: DISJ-16A-SCHN"
+                  className="h-10 text-sm font-mono"
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Catégorie</label>
-                <Input value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder="Tableau & Protection" className="h-10 text-sm" />
+                <select
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white"
+                >
+                  <option value="Tableaux & Protections">Tableaux & Protections</option>
+                  <option value="Câbles & Conducteurs">Câbles & Conducteurs</option>
+                  <option value="Appareillage Mural">Appareillage Mural</option>
+                  <option value="Éclairage LED">Éclairage LED</option>
+                  <option value="Climatisation">Climatisation</option>
+                  <option value="Outillage">Outillage</option>
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Prix achat (TND)</label>
-                  <Input type="number" step="0.001" value={formPurchase} onChange={(e) => setFormPurchase(e.target.value)} placeholder="0.000" className="h-10 text-sm" />
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Achat HT (TND)</label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formPurchase}
+                    onChange={(e) => setFormPurchase(e.target.value)}
+                    placeholder="0.000"
+                    className="h-10 text-sm font-mono"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Prix vente (TND)</label>
-                  <Input type="number" step="0.001" value={formSale} onChange={(e) => setFormSale(e.target.value)} placeholder="0.000" className="h-10 text-sm" />
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Vente HT (TND)</label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formSale}
+                    onChange={(e) => setFormSale(e.target.value)}
+                    placeholder="0.000"
+                    className="h-10 text-sm font-mono"
+                  />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Quantité</label>
-                  <Input type="number" value={formQty} onChange={(e) => setFormQty(e.target.value)} placeholder="0" className="h-10 text-sm" />
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Quantité *</label>
+                  <Input
+                    required
+                    type="number"
+                    min="0"
+                    value={formQty}
+                    onChange={(e) => setFormQty(e.target.value)}
+                    placeholder="0"
+                    className="h-10 text-sm font-mono"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Seuil d'alerte</label>
-                  <Input type="number" value={formThreshold} onChange={(e) => setFormThreshold(e.target.value)} placeholder="0" className="h-10 text-sm" />
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Unité</label>
+                  <Input
+                    value={formUnit}
+                    onChange={(e) => setFormUnit(e.target.value)}
+                    placeholder="pièce"
+                    className="h-10 text-sm"
+                  />
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Unité</label>
-                <Input value={formUnit} onChange={(e) => setFormUnit(e.target.value)} placeholder="pièce" className="h-10 text-sm" />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Seuil Alerte</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formThreshold}
+                    onChange={(e) => setFormThreshold(e.target.value)}
+                    placeholder="5"
+                    className="h-10 text-sm font-mono"
+                  />
+                </div>
               </div>
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs font-medium">Annuler</Button>
-                <Button type="submit" variant="default" className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]">Enregistrer</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-xs font-medium"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  variant="default"
+                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
+                >
+                  Enregistrer
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Delete confirmation */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4">
@@ -241,11 +461,25 @@ export function AdminInventoryClient({ initialProducts }: Props) {
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-base">Supprimer cet article ?</h4>
-              <p className="text-xs text-slate-500 mt-1">Cette action supprimera l'article.</p>
+              <p className="text-xs text-slate-500 mt-1">Cette action supprimera l'article de l'inventaire.</p>
             </div>
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">Annuler</Button>
-              <Button variant="destructive" size="sm" onClick={() => handleDelete(deleteConfirmId)} className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white">Oui, supprimer</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteConfirmId(null)}
+                className="text-xs"
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(deleteConfirmId)}
+                className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Oui, supprimer
+              </Button>
             </div>
           </div>
         </div>

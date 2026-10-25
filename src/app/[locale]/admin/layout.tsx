@@ -27,7 +27,6 @@ import {
   X,
   ExternalLink,
   LogOut,
-  Loader2,
   ShieldCheck,
 } from "lucide-react";
 
@@ -40,6 +39,20 @@ export default function AdminLayout({
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
+  const [customLogo, setCustomLogo] = useState("/logo.png");
+
+  useEffect(() => {
+    const updateLogo = () => {
+      try {
+        const stored = localStorage.getItem("technovolt_company_logo");
+        if (stored) setCustomLogo(stored);
+        else setCustomLogo("/logo.png");
+      } catch {}
+    };
+    updateLogo();
+    window.addEventListener("storage", updateLogo);
+    return () => window.removeEventListener("storage", updateLogo);
+  }, []);
 
   const isLoginPage = pathname.includes("/admin/login");
 
@@ -160,9 +173,10 @@ export default function AdminLayout({
               style={{ position: "relative" }}
             >
               <Image
-                src="/logo.png"
+                src={customLogo}
                 alt="TECHNOVOLT Admin"
                 fill
+                unoptimized
                 sizes="144px"
                 className="object-contain object-start"
               />

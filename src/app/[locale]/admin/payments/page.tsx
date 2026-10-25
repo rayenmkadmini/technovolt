@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { setRequestLocale } from "next-intl/server";
 import { AdminPaymentsClient } from "./AdminPaymentsClient";
 
@@ -11,5 +12,9 @@ export default async function AdminPaymentsPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <AdminPaymentsClient initialPayments={initialPayments} />;
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement des règlements...</div>}>
+      <AdminPaymentsClient initialPayments={initialPayments} />
+    </Suspense>
+  );
 }

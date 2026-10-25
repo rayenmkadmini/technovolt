@@ -1,15 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Button } from "@/components/ui/Button";
 import {
   Menu,
   X,
-  Phone,
   FileText,
   Zap,
   ShieldCheck,
@@ -19,9 +18,22 @@ import {
 
 export function Header() {
   const t = useTranslations("nav");
-  const locale = useLocale();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [customLogo, setCustomLogo] = useState("/logo.png");
+
+  useEffect(() => {
+    const updateLogo = () => {
+      try {
+        const stored = localStorage.getItem("technovolt_company_logo");
+        if (stored) setCustomLogo(stored);
+        else setCustomLogo("/logo.png");
+      } catch {}
+    };
+    updateLogo();
+    window.addEventListener("storage", updateLogo);
+    return () => window.removeEventListener("storage", updateLogo);
+  }, []);
 
   const navLinks = [
     { href: "/", label: t("home") },
@@ -81,9 +93,10 @@ export function Header() {
               style={{ position: "relative" }}
             >
               <Image
-                src="/logo.png"
+                src={customLogo}
                 alt="TECHNOVOLT Logo"
                 fill
+                unoptimized
                 sizes="(max-width: 640px) 176px, 208px"
                 className="object-contain object-start transition-transform duration-300 group-hover:scale-105"
                 priority

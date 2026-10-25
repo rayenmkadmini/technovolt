@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
+import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import {
   Truck,
   Plus,
@@ -14,6 +14,7 @@ import {
   Trash2,
   X,
   CheckCircle2,
+  Search,
 } from "lucide-react";
 
 export interface SupplierItem {
@@ -30,12 +31,40 @@ export interface SupplierItem {
 
 const STORAGE_KEY = "technovolt_admin_suppliers";
 
+const defaultDemoSuppliers: SupplierItem[] = [
+  {
+    id: "supp-01",
+    name: "Comptoir Sud Électrique (CSE)",
+    contact_person: "M. Radhouane",
+    phone: "+216 75 765 890",
+    email: "contact@comptoir-sud.tn",
+    address: "Route de Médenine Km 2, Tataouine",
+    notes: "Distributeur agréé Schneider Electric & Legrand. Remise pro 22%.",
+    outstanding_amount: 0,
+    is_active: true,
+  },
+  {
+    id: "supp-02",
+    name: "Quincaillerie & Fluides du Sud",
+    contact_person: "M. Salem B.",
+    phone: "+216 75 760 340",
+    email: "salem.quincaillerie@gmail.com",
+    address: "Cité Ennour, Tataouine",
+    notes: "Fournisseur outillage Milwaukee, tubes cuivre et fluides frigorigènes R410A / R32.",
+    outstanding_amount: 0,
+    is_active: true,
+  },
+];
+
 interface Props {
   initialSuppliers: SupplierItem[];
 }
 
 export function AdminSuppliersClient({ initialSuppliers }: Props) {
-  const [suppliers, setSuppliers] = useState<SupplierItem[]>(initialSuppliers);
+  const [suppliers, setSuppliers] = useState<SupplierItem[]>(
+    initialSuppliers.length > 0 ? initialSuppliers : defaultDemoSuppliers
+  );
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formName, setFormName] = useState("");
   const [formContact, setFormContact] = useState("");
@@ -47,13 +76,20 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) setTimeout(() => setSuppliers(parsed), 0);
-      }
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSuppliers(parsed);
+            return;
+          }
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoSuppliers));
+      } catch {}
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const showToast = (msg: string) => {
@@ -104,6 +140,14 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
     showToast("Fournisseur supprimé.");
   };
 
+  const filteredSuppliers = suppliers.filter((supp) => {
+    return (
+      supp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supp.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supp.address.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {toastMessage && (
@@ -113,23 +157,62 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
         </div>
       )}
 
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
             <Truck className="h-6 w-6 text-[#0B69FF]" />
             <span>Répertoire Fournisseurs & Partenaires Matériel</span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Grossistes électriques, comptoirs de vente et distributeurs agréés</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Grossistes électriques, comptoirs de vente et distributeurs agréés à Tataouine
+          </p>
         </div>
-        <Button variant="default" size="sm" className="gap-1.5 font-semibold text-xs" onClick={() => setIsModalOpen(true)}>
-          <Plus className="h-4 w-4" />
-          <span>Nouveau Fournisseur</span>
-        </Button>
+
+        <div className="flex items-center gap-3">
+          <ExportCsvButton
+            filename="fournisseurs-technovolt"
+            label="Exporter CSV"
+            headers={["Fournisseur", "Contact", "Téléphone", "Email", "Adresse", "Notes"]}
+            rows={filteredSuppliers.map((s) => [
+              s.name,
+              s.contact_person,
+              s.phone,
+              s.email,
+              s.address,
+              s.notes,
+            ])}
+          />
+
+          <Button
+            variant="default"
+            size="sm"
+            className="gap-1.5 font-semibold text-xs bg-[#0B69FF] hover:bg-[#094FC9]"
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nouveau Fournisseur</span>
+          </Button>
+        </div>
       </div>
 
+      {/* Search */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute start-3 top-2.5 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Rechercher fournisseur, contact, ville..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="ps-9 h-9 text-xs"
+          />
+        </div>
+      </div>
+
+      {/* Suppliers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {suppliers.map((supp) => (
-          <div key={supp.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+        {filteredSuppliers.map((supp) => (
+          <div key={supp.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4 hover:border-[#0B69FF] transition-colors">
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -142,10 +225,15 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
                   </div>
                 )}
               </div>
-              <button onClick={() => setDeleteConfirmId(supp.id)} className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 transition-colors" title="Supprimer">
+              <button
+                onClick={() => setDeleteConfirmId(supp.id)}
+                className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                title="Supprimer"
+              >
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
+
             <div className="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
               {supp.phone && (
                 <div className="flex items-center gap-2 font-mono">
@@ -166,16 +254,18 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
                 </div>
               )}
             </div>
+
             {supp.notes && (
               <p className="text-xs text-slate-500 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">{supp.notes}</p>
             )}
           </div>
         ))}
-        {suppliers.length === 0 && (
-          <div className="col-span-full text-center py-12 text-slate-400 text-xs">Aucun fournisseur.</div>
+        {filteredSuppliers.length === 0 && (
+          <div className="col-span-full text-center py-12 text-slate-400 text-xs">Aucun fournisseur trouvé.</div>
         )}
       </div>
 
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
@@ -199,7 +289,7 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Téléphone</label>
-                <Input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="+216 75 000 000" className="h-10 text-sm" />
+                <Input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="+216 75 000 000" className="h-10 text-sm font-mono" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
@@ -211,7 +301,7 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Notes</label>
-                <Input value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Notes..." className="h-10 text-sm" />
+                <Input value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Observations..." className="h-10 text-sm" />
               </div>
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs font-medium">Annuler</Button>
@@ -222,6 +312,7 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
         </div>
       )}
 
+      {/* Delete confirmation */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4">
@@ -230,7 +321,7 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-base">Supprimer ce fournisseur ?</h4>
-              <p className="text-xs text-slate-500 mt-1">Cette action supprimera le fournisseur de la liste.</p>
+              <p className="text-xs text-slate-500 mt-1">Cette action supprimera le fournisseur de votre carnet d'adresses.</p>
             </div>
             <div className="flex items-center justify-center gap-3 pt-2">
               <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">Annuler</Button>
