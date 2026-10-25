@@ -4,6 +4,7 @@ import { Link } from "@/i18n/routing";
 import { getServices, getProjects, getCompanySettings } from "@/lib/data/services";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { ClientCounter } from "@/components/home/ClientCounter";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -787,6 +788,7 @@ export default async function HomePage({
         </section>
       </main>
 
+      <ClientCounter />
       <Footer />
     </div>
   );

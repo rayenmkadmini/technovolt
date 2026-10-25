@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { defaultCompanySettings } from "@/lib/data/initialData";
 import { Button } from "@/components/ui/Button";
@@ -20,6 +20,48 @@ import {
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState(defaultCompanySettings);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Client counter config
+  const [counterEnabled, setCounterEnabled] = useState(true);
+  const [counterPrefix, setCounterPrefix] = useState("+");
+  const [counterValue, setCounterValue] = useState(500);
+  const [counterLabel, setCounterLabel] = useState("Clients");
+  const [counterTitle, setCounterTitle] = useState("");
+  const [counterDescription, setCounterDescription] = useState("");
+  const [counterAnimated, setCounterAnimated] = useState(true);
+  const [counterSaved, setCounterSaved] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("technovolt_client_counter");
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (typeof c.enabled === "boolean") setCounterEnabled(c.enabled);
+        if (typeof c.prefix === "string") setCounterPrefix(c.prefix);
+        if (typeof c.value === "number") setCounterValue(c.value);
+        if (typeof c.label === "string") setCounterLabel(c.label);
+        if (typeof c.title === "string") setCounterTitle(c.title);
+        if (typeof c.description === "string") setCounterDescription(c.description);
+        if (typeof c.animated === "boolean") setCounterAnimated(c.animated);
+      }
+    } catch {}
+  }, []);
+
+  const handleSaveCounter = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cfg = {
+      enabled: counterEnabled,
+      prefix: counterPrefix,
+      value: Number(counterValue) || 0,
+      label: counterLabel,
+      title: counterTitle,
+      description: counterDescription,
+      animated: counterAnimated,
+    };
+    localStorage.setItem("technovolt_client_counter", JSON.stringify(cfg));
+    setCounterSaved(true);
+    setTimeout(() => setCounterSaved(false), 3000);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,6 +309,88 @@ export default function AdminSettingsPage() {
               />
             </div>
           </div>
+        </div>
+
+        {/* Client Counter Section */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 space-y-6 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h2 className="text-base font-bold text-slate-900">Compteur de Clients (Page d'accueil)</h2>
+            {counterSaved && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Compteur enregistré !</span>
+              </span>
+            )}
+          </div>
+
+          <form onSubmit={handleSaveCounter} className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="counter-enabled"
+                checked={counterEnabled}
+                onChange={(e) => setCounterEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-[#0B69FF] focus:ring-[#0B69FF]"
+              />
+              <label htmlFor="counter-enabled" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                Activer l'affichage du compteur
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Préfixe</label>
+                <Input value={counterPrefix} onChange={(e) => setCounterPrefix(e.target.value)} placeholder="+" className="h-10 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nombre</label>
+                <Input type="number" value={counterValue} onChange={(e) => setCounterValue(Number(e.target.value))} placeholder="500" className="h-10 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Libellé</label>
+                <Input value={counterLabel} onChange={(e) => setCounterLabel(e.target.value)} placeholder="Clients" className="h-10 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Titre (facultatif)</label>
+                <Input value={counterTitle} onChange={(e) => setCounterTitle(e.target.value)} placeholder="Titre de la section" className="h-10 text-sm" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Description (facultatif)</label>
+              <Input value={counterDescription} onChange={(e) => setCounterDescription(e.target.value)} placeholder="Description..." className="h-10 text-sm" />
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="counter-animated"
+                checked={counterAnimated}
+                onChange={(e) => setCounterAnimated(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-[#0B69FF] focus:ring-[#0B69FF]"
+              />
+              <label htmlFor="counter-animated" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                Animation du compteur
+              </label>
+            </div>
+
+            {/* Preview */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center space-y-2">
+              <div className="text-xs text-slate-500 uppercase font-semibold">Aperçu</div>
+              {counterTitle && <div className="text-lg font-bold text-slate-900">{counterTitle}</div>}
+              <div className="text-4xl font-black text-[#0B69FF]">
+                {counterPrefix}
+                {Number(counterValue || 0).toLocaleString("fr-FR")}
+              </div>
+              <div className="text-sm text-slate-600">{counterLabel}</div>
+              {counterDescription && <p className="text-xs text-slate-500">{counterDescription}</p>}
+            </div>
+
+            <div className="flex justify-end">
+              <Button type="submit" variant="default" size="sm" className="gap-2 font-bold">
+                <Save className="h-4 w-4" />
+                <span>Enregistrer le Compteur</span>
+              </Button>
+            </div>
+          </form>
         </div>
 
         {/* Action Button */}
