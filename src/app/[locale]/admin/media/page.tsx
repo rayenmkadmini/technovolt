@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import {
   Image as ImageIcon,
   Upload,
+  X,
   Trash2,
   Folder,
   Eye,
@@ -74,6 +75,12 @@ export default function AdminMediaPage() {
   const [mediaList, setMediaList] = useState<MediaItem[]>(initialMedia);
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formUrl, setFormUrl] = useState("");
+  const [formAltFr, setFormAltFr] = useState("");
+  const [formFolder, setFormFolder] = useState("Chantiers");
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const folders = ["all", "Branding", "Chantiers", "Climatisation", "Domotique"];
 
@@ -108,7 +115,7 @@ export default function AdminMediaPage() {
           </p>
         </div>
 
-        <Button variant="default" size="sm" className="gap-1.5 font-semibold text-xs">
+        <Button variant="default" size="sm" className="gap-1.5 font-semibold text-xs" onClick={() => setIsModalOpen(true)}>
           <Upload className="h-4 w-4" />
           <span>Téléverser un Fichier</span>
         </Button>
@@ -200,6 +207,80 @@ export default function AdminMediaPage() {
           </div>
         ))}
       </div>
+
+    {isModalOpen && (
+      <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Upload className="h-5 w-5 text-[#0B69FF]" />
+              <span>Téléverser un Fichier</span>
+            </h3>
+            <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!formName.trim() || !formUrl.trim()) {
+                alert("Veuillez saisir le nom et l'URL du fichier.");
+                return;
+              }
+              const newItem: MediaItem = {
+                id: `med-${Date.now()}`,
+                name: formName.trim(),
+                url: formUrl.trim(),
+                size: "-",
+                folder: formFolder,
+                altTextFr: formAltFr.trim(),
+                altTextAr: "",
+                uploadedAt: new Date().toISOString().slice(0, 10),
+              };
+              setMediaList([newItem, ...mediaList]);
+              setToastMessage("Fichier ajouté avec succès !");
+              setTimeout(() => setToastMessage(null), 3500);
+              setIsModalOpen(false);
+              setFormName("");
+              setFormUrl("");
+              setFormAltFr("");
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Nom du fichier *</label>
+              <Input required value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="ex: photo-chantier.jpg" className="h-10 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">URL / chemin du fichier *</label>
+              <Input required value={formUrl} onChange={(e) => setFormUrl(e.target.value)} placeholder="/images/projects/..." className="h-10 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Dossier</label>
+              <select value={formFolder} onChange={(e) => setFormFolder(e.target.value)} className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white">
+                {["Branding", "Chantiers", "Climatisation", "Domotique"].map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Texte alternatif (FR)</label>
+              <Input value={formAltFr} onChange={(e) => setFormAltFr(e.target.value)} placeholder="Description de l'image" className="h-10 text-sm" />
+            </div>
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs font-medium">Annuler</Button>
+              <Button type="submit" variant="default" className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]">Ajouter</Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {toastMessage && (
+      <div className="fixed bottom-5 end-5 z-50 bg-[#0B69FF] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold animate-in fade-in slide-in-from-bottom-2">
+        <span>{toastMessage}</span>
+      </div>
+    )}
     </div>
   );
 }

@@ -804,7 +804,7 @@ async function callOpenRouterApi(apiKey: string, messages: BotChatMessage[]): Pr
   const timeout = setTimeout(() => controller.abort(), 14000);
 
   try {
-    const model = process.env.TECHNOVOLT_AI_MODEL || "meta-llama/llama-3.3-70b-instruct";
+    const model = process.env.OPENROUTER_MODEL || process.env.TECHNOVOLT_AI_MODEL || "google/gemini-2.5-flash";
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
