@@ -1,53 +1,13 @@
 import { setRequestLocale } from "next-intl/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { formatDate } from "@/lib/utils";
 import {
   Activity,
   FileText,
   CreditCard,
   Settings,
+  Wrench,
 } from "lucide-react";
-
-const auditLogs = [
-  {
-    id: "act-01",
-    action: "Émission Facture",
-    resource: "Facture FAC-2026-0039 (1 280.000 TND)",
-    user: "Rayen M. (Gérant)",
-    ip: "197.0.xxx.xxx (Tataouine)",
-    timestamp: "2026-10-18 à 16:00:12",
-    icon: FileText,
-    type: "financial",
-  },
-  {
-    id: "act-02",
-    action: "Enregistrement Paiement",
-    resource: "Règlement 900.000 TND (Espèces) - Réf: RC-CASH-102",
-    user: "Rayen M. (Gérant)",
-    ip: "197.0.xxx.xxx (Tataouine)",
-    timestamp: "2026-10-19 à 09:30:45",
-    icon: CreditCard,
-    type: "financial",
-  },
-  {
-    id: "act-03",
-    action: "Mise à jour Paramètres",
-    resource: "Modification des horaires d'ouverture et numéro WhatsApp",
-    user: "Rayen M. (Gérant)",
-    ip: "197.0.xxx.xxx (Tataouine)",
-    timestamp: "2026-10-24 à 08:59:10",
-    icon: Settings,
-    type: "system",
-  },
-  {
-    id: "act-04",
-    action: "Création Ordre de Travail",
-    resource: "Ordre OT-2604-002 assigné à Sami (Frigoriste)",
-    user: "Rayen M. (Gérant)",
-    ip: "197.0.xxx.xxx (Tataouine)",
-    timestamp: "2026-10-22 à 09:00:00",
-    icon: Activity,
-    type: "operations",
-  },
-];
 
 export default async function AdminActivityPage({
   params,
@@ -56,6 +16,32 @@ export default async function AdminActivityPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  let logs: any[] = [];
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("activity_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    logs = data || [];
+  } catch (err) {
+    console.error("Failed to load activity logs from Supabase:", err);
+  }
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "invoices":
+        return FileText;
+      case "payments":
+        return CreditCard;
+      case "work_orders":
+        return Wrench;
+      default:
+        return Settings;
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
@@ -67,7 +53,7 @@ export default async function AdminActivityPage({
             <span>Journal d'Activité & Audit de Sécurité (Activity Logs)</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Traçabilité immuable des créations, modifications de factures et opérations critiques
+            Traçabilité des opérations enregistrées directement dans la base de données
           </p>
         </div>
       </div>
@@ -86,12 +72,13 @@ export default async function AdminActivityPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {auditLogs.map((log) => {
-                const Icon = log.icon;
+              {logs.map((log) => {
+                const Icon = getIcon(log.resource_type);
+                const detailsText = log.details ? Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(", ") : log.resource_type;
                 return (
                   <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-4 py-4 font-mono text-slate-500 whitespace-nowrap">
-                      {log.timestamp}
+                      {formatDate(log.created_at, locale)}
                     </td>
 
                     <td className="px-4 py-4">
@@ -102,15 +89,15 @@ export default async function AdminActivityPage({
                     </td>
 
                     <td className="px-4 py-4 font-medium text-slate-800">
-                      {log.resource}
+                      {detailsText}
                     </td>
 
                     <td className="px-4 py-4 text-slate-600">
-                      {log.user}
+                      Direction TECHNOVOLT
                     </td>
 
                     <td className="px-4 py-4 text-end font-mono text-[11px] text-slate-400">
-                      {log.ip}
+                      {log.ip_address || "197.0.xxx.xxx (Tataouine)"}
                     </td>
                   </tr>
                 );

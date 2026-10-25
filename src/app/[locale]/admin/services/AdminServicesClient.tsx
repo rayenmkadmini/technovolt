@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { createServiceAction, deleteServiceAction } from "@/app/actions/adminActions";
 import {
   Layers,
   Plus,
@@ -128,16 +129,15 @@ export function AdminServicesClient({ initialServices }: Props) {
         const saved = localStorage.getItem(SERVICES_STORAGE);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialServices.length === 0) {
             setServices(parsed);
             return;
           }
         }
-        localStorage.setItem(SERVICES_STORAGE, JSON.stringify(defaultDemoServices));
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialServices]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -154,7 +154,7 @@ export function AdminServicesClient({ initialServices }: Props) {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -185,8 +185,28 @@ export function AdminServicesClient({ initialServices }: Props) {
     }
 
     setIsSubmitting(true);
+    let createdId = `srv-${Date.now()}`;
+
+    try {
+      const res = await createServiceAction({
+        title: formTitle.trim(),
+        short_description: formDesc.trim(),
+        category: formCategory.trim() || "Général",
+        service_type: formType,
+        price_from: formPrice ? Number(formPrice) : undefined,
+        show_price: formShowPrice,
+        estimated_duration: formDuration.trim() || undefined,
+        status: formStatus,
+      });
+      if (res.success && res.data?.id) {
+        createdId = res.data.id;
+      }
+    } catch (err) {
+      console.error("Failed to sync service to database:", err);
+    }
+
     const newSrv: ServiceItem = {
-      id: `srv-${Date.now()}`,
+      id: createdId,
       title: formTitle.trim(),
       short_description: formDesc.trim(),
       category: formCategory.trim() || "Général",
@@ -217,7 +237,12 @@ export function AdminServicesClient({ initialServices }: Props) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteServiceAction(id);
+    } catch (err) {
+      console.error("Failed to delete service from database:", err);
+    }
     saveServices(services.filter((s) => s.id !== id));
     setDeleteConfirmId(null);
     showToast("Service supprimé.");

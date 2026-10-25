@@ -5,6 +5,7 @@ import Image from "next/image";
 import { defaultCompanySettings } from "@/lib/data/initialData";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { updateCompanySettingsAction } from "@/app/actions/adminActions";
 import {
   Settings,
   Save,
@@ -193,11 +194,14 @@ export default function AdminSettingsPage() {
     setTimeout(() => setCounterSaved(false), 3000);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      await updateCompanySettingsAction(settings);
       localStorage.setItem("technovolt_company_settings", JSON.stringify(settings));
-    } catch {}
+    } catch (err) {
+      console.error("Failed to update company settings:", err);
+    }
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };

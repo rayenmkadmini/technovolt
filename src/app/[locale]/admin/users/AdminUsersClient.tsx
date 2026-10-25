@@ -65,7 +65,7 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved !== null) {
+      if (saved !== null && (!initialUsers || initialUsers.length === 0)) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           setTimeout(() => setUsers(parsed), 0);
@@ -74,7 +74,7 @@ export function AdminUsersClient({ initialUsers }: AdminUsersClientProps) {
     } catch {
       // fallback
     }
-  }, []);
+  }, [initialUsers]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

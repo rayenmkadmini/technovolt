@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
+import { createClient } from "@/lib/supabase/client";
 import {
   Star,
   CheckCircle2,
@@ -60,6 +61,38 @@ const initialReviews: Review[] = [
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  useEffect(() => {
+    async function loadTestimonials() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("testimonials")
+          .select("*, testimonial_translations(*)")
+          .order("created_at", { ascending: false });
+
+        if (data && data.length > 0) {
+          const mapped: Review[] = data.map((t: any) => {
+            const frTrans = t.testimonial_translations?.find((tr: any) => tr.locale === "fr") || t.testimonial_translations?.[0];
+            return {
+              id: t.id,
+              customerName: t.customer_name,
+              rating: t.rating || 5,
+              serviceCategory: t.customer_role || "Témoignage Client",
+              comment: frTrans?.content || "Service exemplaire.",
+              date: t.created_at ? t.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+              isVerified: Boolean(t.is_verified),
+              status: (t.status || "approved") as Review["status"],
+            };
+          });
+          setReviews(mapped);
+        }
+      } catch (err) {
+        console.error("Failed to fetch testimonials from Supabase:", err);
+      }
+    }
+    loadTestimonials();
+  }, []);
   const [newReview, setNewReview] = useState({
     customerName: "",
     rating: 5,

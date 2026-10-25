@@ -1,14 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import {
-  initialCustomers,
-  initialLeads,
-  initialAppointments,
-  initialWorkOrders,
-  initialInvoices,
-  initialPayments,
-  initialExpenses,
-} from "@/lib/data/adminStore";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -38,18 +30,50 @@ export default async function AdminDashboardPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  // Load live data from Supabase
+  let invoices: any[] = [];
+  let payments: any[] = [];
+  let expenses: any[] = [];
+  let leads: any[] = [];
+  let appointments: any[] = [];
+  let workOrders: any[] = [];
+  let customers: any[] = [];
+
+  try {
+    const supabase = createAdminClient();
+    const [invRes, payRes, expRes, leadRes, aptRes, woRes, custRes] = await Promise.all([
+      supabase.from("invoices").select("*"),
+      supabase.from("payments").select("*"),
+      supabase.from("expenses").select("*"),
+      supabase.from("leads").select("*").order("created_at", { ascending: false }).limit(5),
+      supabase.from("appointments").select("*, customers(full_name, phone)").order("scheduled_date", { ascending: true }).limit(5),
+      supabase.from("work_orders").select("*"),
+      supabase.from("customers").select("*"),
+    ]);
+
+    invoices = invRes.data || [];
+    payments = payRes.data || [];
+    expenses = expRes.data || [];
+    leads = leadRes.data || [];
+    appointments = aptRes.data || [];
+    workOrders = woRes.data || [];
+    customers = custRes.data || [];
+  } catch (err) {
+    console.error("Failed to load dashboard data from Supabase:", err);
+  }
+
   // Financial calculations
-  const totalInvoiced = initialInvoices.reduce((sum, inv) => sum + inv.total, 0);
-  const totalCollected = initialPayments.reduce((sum, pay) => sum + pay.amount, 0);
-  const totalReceivables = initialInvoices.reduce((sum, inv) => sum + inv.balance_due, 0);
-  const totalExpenses = initialExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const totalInvoiced = invoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0);
+  const totalCollected = payments.reduce((sum, pay) => sum + (Number(pay.amount) || 0), 0);
+  const totalReceivables = invoices.reduce((sum, inv) => sum + (Number(inv.balance_due) || 0), 0);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
   const estimatedProfit = totalCollected - totalExpenses;
 
   // Operational metrics
-  const newLeads = initialLeads.filter((l) => l.status === "new");
-  const upcomingApts = initialAppointments.filter((a) => a.status === "confirmed");
-  const activeJobs = initialWorkOrders.filter((w) => w.status === "in_progress");
-  const unpaidInvoices = initialInvoices.filter((i) => i.balance_due > 0);
+  const newLeads = leads.filter((l) => l.status === "new");
+  const upcomingApts = appointments.filter((a) => a.status === "confirmed");
+  const activeJobs = workOrders.filter((w) => w.status === "in_progress");
+  const unpaidInvoices = invoices.filter((i) => (Number(i.balance_due) || 0) > 0);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -213,7 +237,7 @@ export default async function AdminDashboardPage({
                 <Users className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="mt-2 text-2xl font-black text-slate-900">
-                {initialCustomers.length}
+                {customers.length}
               </div>
               <span className="text-[11px] text-emerald-600 font-medium">Actifs</span>
             </div>
@@ -263,45 +287,51 @@ export default async function AdminDashboardPage({
           </div>
 
           <div className="divide-y divide-slate-100">
-            {initialLeads.map((lead) => (
-              <div key={lead.id} className="py-3.5 flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-slate-900">
-                      {lead.full_name}
-                    </span>
-                    <Badge
-                      variant={lead.status === "new" ? "secondary" : "outline"}
-                      className="text-[10px]"
-                    >
-                      {lead.status === "new" ? "Nouveau" : "Contacté"}
-                    </Badge>
+            {leads.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center">Aucune demande enregistrée.</p>
+            ) : (
+              leads.map((lead) => (
+                <div key={lead.id} className="py-3.5 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-slate-900">
+                        {lead.full_name}
+                      </span>
+                      <Badge
+                        variant={lead.status === "new" ? "secondary" : "outline"}
+                        className="text-[10px]"
+                      >
+                        {lead.status === "new" ? "Nouveau" : "Contacté"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        <span>{lead.phone}</span>
+                      </span>
+                      <span>&bullet;</span>
+                      <span>{lead.address || "Tataouine"}</span>
+                    </div>
+                    {lead.message && (
+                      <p className="text-xs text-slate-600 line-clamp-1 italic">
+                        "{lead.message}"
+                      </p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      <span>{lead.phone}</span>
-                    </span>
-                    <span>&bullet;</span>
-                    <span>{lead.address}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 line-clamp-1 italic">
-                    "{lead.message}"
-                  </p>
-                </div>
 
-                <div className="shrink-0 text-end">
-                  <span className="text-[10px] text-slate-400 block mb-1">
-                    {formatDate(lead.created_at, locale)}
-                  </span>
-                  <Link href={`/admin/quotations/new?leadId=${lead.id}`}>
-                    <Button variant="default" size="sm" className="text-xs h-7 px-2">
-                      Créer Devis
-                    </Button>
-                  </Link>
+                  <div className="shrink-0 text-end">
+                    <span className="text-[10px] text-slate-400 block mb-1">
+                      {formatDate(lead.created_at, locale)}
+                    </span>
+                    <Link href={`/admin/quotations/new?leadId=${lead.id}`}>
+                      <Button variant="default" size="sm" className="text-xs h-7 px-2">
+                        Créer Devis
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -325,36 +355,40 @@ export default async function AdminDashboardPage({
           </div>
 
           <div className="space-y-3">
-            {initialAppointments.map((apt) => (
-              <div
-                key={apt.id}
-                className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#0B69FF] flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-[#F5A623]" />
-                    <span>{apt.scheduled_date} à {apt.scheduled_time}</span>
-                  </span>
-                  <Badge variant="success" className="text-[10px]">
-                    Confirmé
-                  </Badge>
-                </div>
-
-                <div>
-                  <div className="font-bold text-sm text-slate-900">
-                    {apt.customer_name}
+            {appointments.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center">Aucun rendez-vous planifié.</p>
+            ) : (
+              appointments.map((apt) => (
+                <div
+                  key={apt.id}
+                  className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#0B69FF] flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 text-[#F5A623]" />
+                      <span>{apt.scheduled_date} à {apt.scheduled_time || "09:00"}</span>
+                    </span>
+                    <Badge variant="success" className="text-[10px]">
+                      Confirmé
+                    </Badge>
                   </div>
-                  <div className="text-xs text-slate-600">
-                    {apt.service_title}
+
+                  <div>
+                    <div className="font-bold text-sm text-slate-900">
+                      {apt.customers?.full_name || apt.reference_number}
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      {apt.notes || "Intervention technique à domicile"}
+                    </div>
+                  </div>
+
+                  <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-200/60">
+                    <span>{apt.address || "Tataouine"}</span>
+                    <span className="font-medium text-slate-700">Équipe Technique Tataouine</span>
                   </div>
                 </div>
-
-                <div className="pt-1 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-200/60">
-                  <span>{apt.address}</span>
-                  <span className="font-medium text-slate-700">{apt.technician_name}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

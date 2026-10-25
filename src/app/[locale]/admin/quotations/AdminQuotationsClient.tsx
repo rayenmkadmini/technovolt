@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { deleteQuotationAction } from "@/app/actions/adminActions";
 import {
   FileText,
   Plus,
@@ -101,9 +102,17 @@ function buildInvoiceFromQuote(quote: QuotationItem) {
   };
 }
 
-export function AdminQuotationsClient({ locale }: { locale: string }) {
+export function AdminQuotationsClient({
+  locale,
+  initialQuotations = [],
+}: {
+  locale: string;
+  initialQuotations?: QuotationItem[];
+}) {
   const router = useRouter();
-  const [quotations, setQuotations] = useState<QuotationItem[]>(defaultDemoQuotations);
+  const [quotations, setQuotations] = useState<QuotationItem[]>(
+    initialQuotations.length > 0 ? initialQuotations : defaultDemoQuotations
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -115,16 +124,15 @@ export function AdminQuotationsClient({ locale }: { locale: string }) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialQuotations.length === 0) {
             setQuotations(parsed);
             return;
           }
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoQuotations));
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialQuotations]);
 
   const saveQuotations = (next: QuotationItem[]) => {
     setQuotations(next);
@@ -139,7 +147,12 @@ export function AdminQuotationsClient({ locale }: { locale: string }) {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteQuotationAction(id);
+    } catch (err) {
+      console.error("Failed to delete quotation from database:", err);
+    }
     saveQuotations(quotations.filter((q) => q.id !== id));
     setDeleteConfirmId(null);
     showToast("Devis supprimé.");

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
+import { createWorkOrderAction, deleteWorkOrderAction } from "@/app/actions/adminActions";
 import {
   Wrench,
   Plus,
@@ -87,8 +88,16 @@ const techniciansList = [
   "Équipe Technique Chantier",
 ];
 
-export function AdminWorkOrdersClient({ locale }: { locale: string }) {
-  const [workOrders, setWorkOrders] = useState<WorkOrderItem[]>(initialDemoWorkOrders);
+export function AdminWorkOrdersClient({
+  locale,
+  initialWorkOrders = [],
+}: {
+  locale: string;
+  initialWorkOrders?: WorkOrderItem[];
+}) {
+  const [workOrders, setWorkOrders] = useState<WorkOrderItem[]>(
+    initialWorkOrders.length > 0 ? initialWorkOrders : initialDemoWorkOrders
+  );
   const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string }[]>(
     defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone }))
   );
@@ -123,12 +132,9 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialWorkOrders.length === 0) {
             setWorkOrders(parsed);
           }
-        } else {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDemoWorkOrders));
-          setWorkOrders(initialDemoWorkOrders);
         }
 
         // 2. Customers
@@ -152,7 +158,7 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialWorkOrders]);
 
   const saveWorkOrders = (next: WorkOrderItem[]) => {
     setWorkOrders(next);
@@ -189,7 +195,7 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
     }
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -224,8 +230,30 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
     }
 
     setIsSubmitting(true);
+    let createdId = `wo-${Date.now()}`;
+    try {
+      const res = await createWorkOrderAction({
+        job_number: formJobNumber || undefined,
+        customer_name: formCustomer.trim(),
+        customer_phone: formPhone.trim(),
+        service_title: formService,
+        description: formDesc.trim(),
+        status: formStatus,
+        start_date: formStartDate,
+        completion_date: formEndDate || undefined,
+        labor_hours: hours,
+        total_cost: Math.round(cost * 1000) / 1000,
+        notes: formNotes.trim(),
+      });
+      if (res.success && res.data?.id) {
+        createdId = res.data.id;
+      }
+    } catch (err) {
+      console.error("Failed to sync work order to database:", err);
+    }
+
     const newWorkOrder: WorkOrderItem = {
-      id: `wo-${Date.now()}`,
+      id: createdId,
       job_number: formJobNumber || `OT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       customer_name: formCustomer.trim(),
       customer_phone: formPhone.trim(),
@@ -260,7 +288,12 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteWorkOrderAction(id);
+    } catch (err) {
+      console.error("Failed to delete work order from database:", err);
+    }
     saveWorkOrders(workOrders.filter((wo) => wo.id !== id));
     setDeleteConfirmId(null);
     showToast("Ordre de travail supprimé.");

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { createProductAction, deleteProductAction } from "@/app/actions/adminActions";
 import {
   Package,
   Plus,
@@ -102,16 +103,15 @@ export function AdminInventoryClient({ initialProducts }: Props) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialProducts.length === 0) {
             setProducts(parsed);
             return;
           }
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoProducts));
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialProducts]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -128,7 +128,7 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -157,8 +157,28 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     }
 
     setIsSubmitting(true);
+    let createdId = `prod-${Date.now()}`;
+
+    try {
+      const res = await createProductAction({
+        name: formName.trim(),
+        sku: formSku.trim(),
+        category: formCategory.trim() || "Tableaux & Protections",
+        purchase_cost: !isNaN(purchase) && purchase >= 0 ? purchase : 0,
+        sale_price: !isNaN(sale) && sale >= 0 ? sale : 0,
+        quantity: qty,
+        low_stock_threshold: !isNaN(threshold) && threshold >= 0 ? threshold : 5,
+        unit: formUnit,
+      });
+      if (res.success && res.data?.id) {
+        createdId = res.data.id;
+      }
+    } catch (err) {
+      console.error("Failed to sync product to database:", err);
+    }
+
     const newProd: ProductItem = {
-      id: `prod-${Date.now()}`,
+      id: createdId,
       sku: formSku.trim(),
       name: formName.trim(),
       category: formCategory.trim() || "Général",
@@ -186,7 +206,12 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProductAction(id);
+    } catch (err) {
+      console.error("Failed to delete product from database:", err);
+    }
     save(products.filter((p) => p.id !== id));
     setDeleteConfirmId(null);
     showToast("Article supprimé.");

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { createSupplierAction, deleteSupplierAction } from "@/app/actions/adminActions";
 import {
   Truck,
   Plus,
@@ -94,16 +95,15 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialSuppliers.length === 0) {
             setSuppliers(parsed);
             return;
           }
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoSuppliers));
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialSuppliers]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -120,7 +120,7 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -145,8 +145,26 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
     }
 
     setIsSubmitting(true);
+    let createdId = `supp-${Date.now()}`;
+
+    try {
+      const res = await createSupplierAction({
+        name: formName.trim(),
+        contact_person: formContact.trim() || undefined,
+        phone: formPhone.trim() || undefined,
+        email: formEmail.trim() || undefined,
+        address: formAddress.trim() || undefined,
+        notes: formNotes.trim() || undefined,
+      });
+      if (res.success && res.data?.id) {
+        createdId = res.data.id;
+      }
+    } catch (err) {
+      console.error("Failed to sync supplier to database:", err);
+    }
+
     const newSupp: SupplierItem = {
-      id: `supp-${Date.now()}`,
+      id: createdId,
       name: formName.trim(),
       contact_person: formContact.trim(),
       phone: formPhone.trim(),
@@ -172,7 +190,12 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteSupplierAction(id);
+    } catch (err) {
+      console.error("Failed to delete supplier from database:", err);
+    }
     save(suppliers.filter((s) => s.id !== id));
     setDeleteConfirmId(null);
     showToast("Fournisseur supprimé.");

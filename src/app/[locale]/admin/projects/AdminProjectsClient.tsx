@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ALL_CHANTIER_PHOTOS } from "@/lib/data/galleryPhotos";
+import { createProjectAction, deleteProjectAction } from "@/app/actions/adminActions";
 import {
   Image as ImageIcon,
   Plus,
@@ -49,7 +50,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0 && initialProjects.length === 0) {
           setTimeout(() => {
             setProjects(parsed);
           }, 0);
@@ -58,7 +59,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
     } catch {
       // Fallback to initial
     }
-  }, []);
+  }, [initialProjects.length]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -122,7 +123,7 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
     setIsModalOpen(true);
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim()) {
       alert("Veuillez saisir un titre de projet.");
@@ -149,8 +150,26 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
       showToast("Projet modifié avec succès !");
     } else {
       // Add new
+      let createdId = `proj-${Date.now()}`;
+      try {
+        const res = await createProjectAction({
+          title: formTitle.trim(),
+          category: formCategory,
+          location: formLocation.trim(),
+          completion_date: formDate,
+          description: formDescription.trim(),
+          cover_image: formCoverImage,
+          is_featured: formIsFeatured,
+        });
+        if (res.success && res.data?.id) {
+          createdId = res.data.id;
+        }
+      } catch (err) {
+        console.error("Failed to sync project to database:", err);
+      }
+
       const newProj: ProjectItem = {
-        id: `proj-${Date.now()}`,
+        id: createdId,
         title: formTitle.trim(),
         category: formCategory,
         location: formLocation.trim(),
@@ -166,7 +185,12 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteProjectAction(id);
+    } catch (err) {
+      console.error("Failed to delete project from database:", err);
+    }
     const updated = projects.filter((p) => p.id !== id);
     saveProjects(updated);
     setDeleteConfirmId(null);

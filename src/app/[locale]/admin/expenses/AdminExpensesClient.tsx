@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { createExpenseAction, deleteExpenseAction } from "@/app/actions/adminActions";
 import {
   Plus,
   Trash2,
@@ -117,12 +118,9 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialExpenses.length === 0) {
             setExpenses(parsed);
           }
-        } else {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoExpenses));
-          setExpenses(defaultDemoExpenses);
         }
 
         // 2. Suppliers
@@ -137,7 +135,7 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialExpenses]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -156,7 +154,7 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -175,9 +173,30 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
     }
 
     setIsSubmitting(true);
+    let createdId = `exp-${Date.now()}`;
+    let createdRef = `DEP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      const res = await createExpenseAction({
+        description: formDesc.trim(),
+        amount: Math.round(amt * 1000) / 1000,
+        expense_date: formDate,
+        category_name: formCategory.trim() || "Matériel Électrique",
+        supplier_name: formSupplier.trim() || undefined,
+        payment_method: formMethod === "cash" ? "Espèces" : formMethod === "bank_transfer" ? "Virement" : "Chèque",
+        notes: formNotes.trim() || undefined,
+      });
+      if (res.success && res.data) {
+        createdId = res.data.id;
+        if (res.data.reference) createdRef = res.data.reference;
+      }
+    } catch (err) {
+      console.error("Failed to sync expense to database:", err);
+    }
+
     const newExp: ExpenseItem = {
-      id: `exp-${Date.now()}`,
-      reference: `DEP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: createdId,
+      reference: createdRef,
       expense_date: formDate,
       category_name: formCategory.trim() || "Matériel Électrique",
       supplier_name: formSupplier.trim() || "—",
@@ -208,7 +227,12 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteExpenseAction(id);
+    } catch (err) {
+      console.error("Failed to delete expense from database:", err);
+    }
     save(expenses.filter((e) => e.id !== id));
     setDeleteConfirmId(null);
     showToast("Dépense supprimée.");

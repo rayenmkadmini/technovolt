@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { deleteInvoiceAction } from "@/app/actions/adminActions";
 import {
   FileText,
   Plus,
@@ -73,8 +74,16 @@ const defaultDemoInvoices: InvoiceItem[] = [
   },
 ];
 
-export function AdminInvoicesClient({ locale }: { locale: string }) {
-  const [invoices, setInvoices] = useState<InvoiceItem[]>(defaultDemoInvoices);
+export function AdminInvoicesClient({
+  locale,
+  initialInvoices = [],
+}: {
+  locale: string;
+  initialInvoices?: InvoiceItem[];
+}) {
+  const [invoices, setInvoices] = useState<InvoiceItem[]>(
+    initialInvoices.length > 0 ? initialInvoices : defaultDemoInvoices
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -86,17 +95,15 @@ export function AdminInvoicesClient({ locale }: { locale: string }) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialInvoices.length === 0) {
             setInvoices(parsed);
             return;
           }
         }
-        // Save default seed so it's consistent across views
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoInvoices));
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialInvoices]);
 
   const saveInvoices = (next: InvoiceItem[]) => {
     setInvoices(next);
@@ -111,7 +118,12 @@ export function AdminInvoicesClient({ locale }: { locale: string }) {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteInvoiceAction(id);
+    } catch (err) {
+      console.error("Failed to delete invoice from database:", err);
+    }
     saveInvoices(invoices.filter((inv) => inv.id !== id));
     setDeleteConfirmId(null);
     showToast("Facture supprimée.");

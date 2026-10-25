@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
+import { createAppointmentAction, deleteAppointmentAction } from "@/app/actions/adminActions";
 import {
   Calendar,
   MapPin,
@@ -37,39 +38,6 @@ export interface AppointmentItem {
 }
 
 const STORAGE_KEY = "technovolt_admin_appointments";
-
-const defaultDemoAppointments: AppointmentItem[] = [
-  {
-    id: "apt-01",
-    reference_number: "RDV-2026-0021",
-    customer_name: "Mourad Chaabane",
-    customer_phone: "+216 97 554 112",
-    service_title: "Diagnostic disjoncteur différentiel & dépannage",
-    scheduled_date: "2026-10-26",
-    scheduled_time: "09:30",
-    estimated_duration: "1h30",
-    address: "Cité Ennour, Tataouine",
-    technician_name: "Tarak B.",
-    status: "confirmed",
-    notes: "Coupure intempestive lors du branchement du chauffe-eau",
-    created_at: "2026-10-24T14:00:00Z",
-  },
-  {
-    id: "apt-02",
-    reference_number: "RDV-2026-0022",
-    customer_name: "Café Essafsaf",
-    customer_phone: "+216 75 761 900",
-    service_title: "Entretien et recharge climatiseur 24000 BTU",
-    scheduled_date: "2026-10-27",
-    scheduled_time: "14:00",
-    estimated_duration: "2h",
-    address: "Avenue Habib Bourguiba, Tataouine",
-    technician_name: "Kais M.",
-    status: "confirmed",
-    notes: "Climatiseur principal salle non refroidissant",
-    created_at: "2026-10-24T16:20:00Z",
-  },
-];
 
 const fallbackServicesList = [
   "Installation Tableau Électrique & TGBT",
@@ -122,13 +90,9 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialAppointments.length === 0) {
             setAppointments(parsed);
           }
-        } else {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoAppointments));
-          setAppointments(defaultDemoAppointments);
-          window.dispatchEvent(new Event("storage"));
         }
 
         // 2. Customers
@@ -162,7 +126,7 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialAppointments]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -188,7 +152,7 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -210,9 +174,32 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
     }
 
     setIsSubmitting(true);
+    let createdId = `apt-${Date.now()}`;
+    let createdRef = `RDV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      const res = await createAppointmentAction({
+        customer_name: formCustomer.trim(),
+        customer_phone: formPhone.trim(),
+        service_title: formService.trim(),
+        scheduled_date: formDate,
+        scheduled_time: formTime,
+        estimated_duration: formDuration.trim() || "1h30",
+        address: formAddress.trim(),
+        notes: formNotes.trim(),
+        technician_name: formTechnician.trim(),
+      });
+      if (res.success && res.data) {
+        createdId = res.data.id;
+        if (res.data.reference_number) createdRef = res.data.reference_number;
+      }
+    } catch (err) {
+      console.error("Failed to sync appointment to database:", err);
+    }
+
     const newApt: AppointmentItem = {
-      id: `apt-${Date.now()}`,
-      reference_number: `RDV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: createdId,
+      reference_number: createdRef,
       customer_name: formCustomer.trim(),
       customer_phone: formPhone.trim(),
       service_title: formService.trim(),
@@ -244,7 +231,12 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAppointmentAction(id);
+    } catch (err) {
+      console.error("Failed to delete appointment from database:", err);
+    }
     const updated = appointments.filter((a) => a.id !== id);
     save(updated);
     setDeleteConfirmId(null);

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
+import { createPaymentAction, deletePaymentAction } from "@/app/actions/adminActions";
 import {
   CreditCard,
   Plus,
@@ -97,12 +98,9 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialPayments.length === 0) {
             setPayments(parsed);
           }
-        } else {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoPayments));
-          setPayments(defaultDemoPayments);
         }
 
         // 2. Invoices
@@ -125,7 +123,7 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialPayments]);
 
   // Check URL query parameters for prefilling from invoice list
   useEffect(() => {
@@ -170,7 +168,7 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -213,9 +211,37 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
     }
 
     setIsSubmitting(true);
+    let createdId = `pay-${Date.now()}`;
+    let createdRef = `REG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      const res = await createPaymentAction({
+        customer_name: formCustomer.trim(),
+        invoice_number: formInvoice.trim() || undefined,
+        amount: Math.round(amt * 1000) / 1000,
+        payment_method:
+          formMethod === "cash"
+            ? "Espèces"
+            : formMethod === "bank_transfer"
+            ? "Virement"
+            : formMethod === "check"
+            ? "Chèque"
+            : "Traite",
+        payment_date: formDate,
+        receipt_reference: formReceipt.trim() || undefined,
+        notes: formNotes.trim() || undefined,
+      });
+      if (res.success && res.data) {
+        createdId = res.data.id;
+        if (res.data.payment_reference) createdRef = res.data.payment_reference;
+      }
+    } catch (err) {
+      console.error("Failed to sync payment to database:", err);
+    }
+
     const newPay: PaymentItem = {
-      id: `pay-${Date.now()}`,
-      payment_reference: `REG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: createdId,
+      payment_reference: createdRef,
       customer_name: formCustomer.trim(),
       invoice_number: formInvoice.trim(),
       amount: Math.round(amt * 1000) / 1000,
@@ -281,7 +307,12 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePaymentAction(id);
+    } catch (err) {
+      console.error("Failed to delete payment from database:", err);
+    }
     save(payments.filter((p) => p.id !== id));
     setDeleteConfirmId(null);
     showToast("Règlement supprimé.");

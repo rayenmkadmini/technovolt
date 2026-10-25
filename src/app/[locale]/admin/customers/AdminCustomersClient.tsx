@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
+import { createCustomerAction, deleteCustomerAction } from "@/app/actions/adminActions";
 import {
   Users,
   Plus,
@@ -111,16 +112,15 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
+          if (Array.isArray(parsed) && parsed.length > 0 && initialCustomers.length === 0) {
             setCustomers(parsed);
             return;
           }
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoCustomers));
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialCustomers]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -137,7 +137,7 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -157,9 +157,27 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
     }
 
     setIsSubmitting(true);
+    let createdId = `cust-${Date.now()}`;
+    let createdRef = `CLI-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    try {
+      const res = await createCustomerAction({
+        full_name: formName.trim(),
+        phone: formPhone.trim(),
+        email: formEmail.trim() || undefined,
+        company_name: formCompany.trim() || undefined,
+      });
+      if (res.success && res.data) {
+        createdId = res.data.id;
+        if (res.data.reference_number) createdRef = res.data.reference_number;
+      }
+    } catch (err) {
+      console.error("Failed to sync customer to database:", err);
+    }
+
     const newCust: CustomerItem = {
-      id: `cust-${Date.now()}`,
-      reference_number: `CLI-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: createdId,
+      reference_number: createdRef,
       full_name: formName.trim(),
       phone: formPhone.trim(),
       email: formEmail.trim(),
@@ -182,7 +200,12 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
     setFormError(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCustomerAction(id);
+    } catch (err) {
+      console.error("Failed to delete customer from database:", err);
+    }
     save(customers.filter((c) => c.id !== id));
     setDeleteConfirmId(null);
     showToast("Client supprimé.");
