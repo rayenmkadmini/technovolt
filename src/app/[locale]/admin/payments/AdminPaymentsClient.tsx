@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
 import {
   CreditCard,
   Plus,
@@ -70,6 +71,11 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
   const [payments, setPayments] = useState<PaymentItem[]>(
     initialPayments.length > 0 ? initialPayments : defaultDemoPayments
   );
+  const [availableInvoices, setAvailableInvoices] = useState<any[]>([]);
+  const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string }[]>(
+    defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone }))
+  );
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formCustomer, setFormCustomer] = useState("");
@@ -80,21 +86,43 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
   const [formReceipt, setFormReceipt] = useState("");
   const [formNotes, setFormNotes] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
+        // 1. Payments
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setPayments(parsed);
-            return;
+          } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoPayments));
+          }
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoPayments));
+        }
+
+        // 2. Invoices
+        const invStorage = localStorage.getItem("technovolt_admin_invoices");
+        if (invStorage) {
+          const parsedInv = JSON.parse(invStorage);
+          if (Array.isArray(parsedInv)) {
+            setAvailableInvoices(parsedInv);
           }
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoPayments));
+
+        // 3. Customers
+        const custRaw = localStorage.getItem("technovolt_admin_customers");
+        if (custRaw) {
+          const parsedCust = JSON.parse(custRaw);
+          if (Array.isArray(parsedCust) && parsedCust.length > 0) {
+            setAvailableCustomers(parsedCust.map((c: any) => ({ name: c.full_name, phone: c.phone || "" })));
+          }
+        }
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
@@ -132,12 +160,22 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
 
   const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0);
 
+  const handleInvoiceSelect = (invNum: string) => {
+    setFormInvoice(invNum);
+    if (!invNum) return;
+    const inv = availableInvoices.find((i) => i.invoice_number === invNum);
+    if (inv) {
+      setFormCustomer(inv.customer_name);
+      setFormAmount(String(inv.balance_due || inv.total || 0));
+    }
+  };
+
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
     if (!formCustomer.trim()) {
-      setFormError("Veuillez saisir le nom du client.");
+      setFormError("Veuillez sélectionner ou saisir le nom du client.");
       return;
     }
     const amt = parseFloat(formAmount);
@@ -150,6 +188,31 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
       return;
     }
 
+    // Duplicate detection: check for exact duplicate receipt reference if provided
+    if (formReceipt.trim()) {
+      const duplicateReceipt = payments.find(
+        (p) => p.receipt_reference && p.receipt_reference.toLowerCase() === formReceipt.trim().toLowerCase()
+      );
+      if (duplicateReceipt) {
+        setFormError(`Un règlement existe déjà avec la référence de reçu "${formReceipt.trim()}".`);
+        return;
+      }
+    }
+
+    // Prevent identical duplicate payment on same invoice, customer, amount and date
+    const duplicatePayment = payments.find(
+      (p) =>
+        p.customer_name.toLowerCase() === formCustomer.trim().toLowerCase() &&
+        p.invoice_number.toLowerCase() === formInvoice.trim().toLowerCase() &&
+        p.amount === Math.round(amt * 1000) / 1000 &&
+        p.payment_date === formDate
+    );
+    if (duplicatePayment) {
+      setFormError("Un règlement identique a déjà été enregistré pour ce client, cette facture et cette date.");
+      return;
+    }
+
+    setIsSubmitting(true);
     const newPay: PaymentItem = {
       id: `pay-${Date.now()}`,
       payment_reference: `REG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -158,7 +221,14 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
       amount: Math.round(amt * 1000) / 1000,
       currency: "TND",
       payment_date: formDate,
-      payment_method: formMethod === "cash" ? "Espèces" : formMethod === "bank_transfer" ? "Virement" : "Chèque",
+      payment_method:
+        formMethod === "cash"
+          ? "Espèces"
+          : formMethod === "bank_transfer"
+          ? "Virement"
+          : formMethod === "check"
+          ? "Chèque"
+          : "Traite",
       receipt_reference: formReceipt.trim(),
       notes: formNotes.trim(),
       created_at: new Date().toISOString(),
@@ -188,6 +258,7 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
               return inv;
             });
             localStorage.setItem("technovolt_admin_invoices", JSON.stringify(updatedInvList));
+            window.dispatchEvent(new Event("storage"));
           }
         }
       } catch (err) {
@@ -195,8 +266,11 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
       }
     }
 
-    showToast("Règlement enregistré avec succès !");
+    setIsSubmitting(false);
+    showToast(`Règlement ${newPay.payment_reference} enregistré avec succès !`);
     setIsModalOpen(false);
+
+    // Reset
     setFormCustomer("");
     setFormInvoice("");
     setFormAmount("");
@@ -213,11 +287,12 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
     showToast("Règlement supprimé.");
   };
 
-  const filteredPayments = payments.filter((p) => {
+  const filteredPayments = payments.filter((pay) => {
     return (
-      p.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.payment_reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())
+      pay.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pay.payment_reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pay.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pay.receipt_reference.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -235,89 +310,104 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
             <CreditCard className="h-6 w-6 text-[#0B69FF]" />
-            <span>Encaissements & Règlements Reçus</span>
+            <span>Encaissements & Règlements Clients</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Traçabilité des flux financiers réels encaissés (espèces, virements, chèques)
+            Total Encaissé :{" "}
+            <span className="font-extrabold text-emerald-600 font-mono text-base">
+              {formatCurrency(totalCollected)}
+            </span>
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-end">
-            <div className="text-xs text-slate-400 font-semibold uppercase">Total Encaissé</div>
-            <div className="text-xl font-black text-emerald-600">{formatCurrency(totalCollected, "fr")}</div>
-          </div>
 
+        <div className="flex items-center gap-3">
           <ExportCsvButton
             filename="reglements-technovolt"
             label="Exporter CSV"
-            headers={["Réf. Règlement", "Date", "Client", "Facture", "Mode", "Montant (TND)", "Réf. Reçu"]}
+            headers={[
+              "Réf. Paiement",
+              "Client",
+              "N° Facture",
+              "Montant (TND)",
+              "Date",
+              "Mode",
+              "N° Reçu / Transaction",
+              "Notes",
+            ]}
             rows={filteredPayments.map((p) => [
               p.payment_reference,
-              p.payment_date,
               p.customer_name,
-              p.invoice_number || "-",
-              p.payment_method,
+              p.invoice_number,
               p.amount,
-              p.receipt_reference || "-",
+              p.payment_date,
+              p.payment_method,
+              p.receipt_reference,
+              p.notes,
             ])}
           />
 
           <Button
-            variant="default"
-            size="sm"
-            className="gap-1.5 font-semibold text-xs bg-[#0B69FF] hover:bg-[#094FC9]"
             onClick={() => {
               setFormError(null);
               setIsModalOpen(true);
             }}
+            className="bg-[#0B69FF] hover:bg-[#094FC9] text-white gap-2 font-bold px-5"
           >
             <Plus className="h-4 w-4" />
-            <span>Enregistrer Règlement</span>
+            <span>Enregistrer un règlement</span>
           </Button>
         </div>
       </div>
 
       {/* Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-3">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute start-3 top-2.5 h-4 w-4 text-slate-400" />
+      <div className="bg-white p-4 rounded-xl border border-slate-200">
+        <div className="relative">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Rechercher par client, reçu ou facture..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ps-9 h-9 text-xs"
+            placeholder="Rechercher par client, référence paiement, facture ou reçu..."
+            className="ps-9 h-10 text-sm"
           />
         </div>
       </div>
 
-      {/* Payments Table */}
+      {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-start text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+          <table className="w-full text-start text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-4 py-3.5 text-start">Réf. Règlement</th>
-                <th className="px-4 py-3.5 text-start">Date</th>
-                <th className="px-4 py-3.5 text-start">Client</th>
-                <th className="px-4 py-3.5 text-start">Facture</th>
-                <th className="px-4 py-3.5 text-center">Mode</th>
-                <th className="px-4 py-3.5 text-end">Montant</th>
-                <th className="px-4 py-3.5 text-center">Actions</th>
+                <th className="py-3 px-4 text-start">Réf. Règlement</th>
+                <th className="py-3 px-4 text-start">Client</th>
+                <th className="py-3 px-4 text-start">Facture Liée</th>
+                <th className="py-3 px-4 text-start">Date</th>
+                <th className="py-3 px-4 text-start">Mode de Règlement</th>
+                <th className="py-3 px-4 text-start">Réf. Reçu / Transaction</th>
+                <th className="py-3 px-4 text-end">Montant Encaissé</th>
+                <th className="py-3 px-4 text-end">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredPayments.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-4 py-4 font-mono font-bold text-[#0B69FF]">{p.payment_reference}</td>
-                  <td className="px-4 py-4 text-slate-600">{p.payment_date}</td>
-                  <td className="px-4 py-4 font-semibold text-slate-900">{p.customer_name}</td>
-                  <td className="px-4 py-4 text-slate-600 font-mono">{p.invoice_number || "-"}</td>
-                  <td className="px-4 py-4 text-center text-slate-500">{p.payment_method}</td>
-                  <td className="px-4 py-4 text-end font-semibold text-emerald-600">{formatCurrency(p.amount, "fr")}</td>
-                  <td className="px-4 py-4 text-center">
+                  <td className="py-3 px-4 font-mono font-bold text-[#0B69FF]">{p.payment_reference}</td>
+                  <td className="py-3 px-4 font-bold text-slate-900">{p.customer_name}</td>
+                  <td className="py-3 px-4 font-mono text-slate-600">{p.invoice_number || "—"}</td>
+                  <td className="py-3 px-4 text-slate-600">{p.payment_date}</td>
+                  <td className="py-3 px-4">
+                    <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                      {p.payment_method}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 font-mono text-slate-500">{p.receipt_reference || "—"}</td>
+                  <td className="py-3 px-4 text-end font-extrabold text-emerald-600 font-mono text-sm">
+                    {formatCurrency(p.amount)}
+                  </td>
+                  <td className="py-3 px-4 text-end">
                     <button
                       onClick={() => setDeleteConfirmId(p.id)}
-                      className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
                       title="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -327,7 +417,9 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
               ))}
               {filteredPayments.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400 text-xs">Aucun règlement trouvé.</td>
+                  <td colSpan={8} className="py-12 text-center text-slate-400 text-xs">
+                    Aucun règlement enregistré.
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -335,14 +427,14 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal Nouveau Règlement */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Plus className="h-5 w-5 text-[#0B69FF]" />
-                <span>Enregistrer un Règlement</span>
+                <CreditCard className="h-5 w-5 text-[#0B69FF]" />
+                <span>Enregistrement d'un Règlement</span>
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -360,93 +452,125 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
             )}
 
             <form onSubmit={handleAdd} className="space-y-4">
+              {/* Select from existing Invoices */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Client *</label>
-                <Input
-                  required
-                  value={formCustomer}
-                  onChange={(e) => setFormCustomer(e.target.value)}
-                  placeholder="Nom du client"
-                  className="h-10 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Facture concernée (réf.)</label>
-                <Input
-                  value={formInvoice}
-                  onChange={(e) => setFormInvoice(e.target.value)}
-                  placeholder="Ex: FAC-2026-0038"
-                  className="h-10 text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Montant encaissé (TND) *</label>
-                <Input
-                  required
-                  type="number"
-                  step="0.001"
-                  min="0.001"
-                  value={formAmount}
-                  onChange={(e) => setFormAmount(e.target.value)}
-                  placeholder="0.000"
-                  className="h-10 text-sm font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Date d'encaissement *</label>
-                <Input
-                  required
-                  type="date"
-                  value={formDate}
-                  onChange={(e) => setFormDate(e.target.value)}
-                  className="h-10 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Mode de paiement</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Facture à Régler (optionnel)
+                </label>
                 <select
-                  value={formMethod}
-                  onChange={(e) => setFormMethod(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white"
+                  value={formInvoice}
+                  onChange={(e) => handleInvoiceSelect(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
                 >
-                  <option value="cash">Espèces</option>
-                  <option value="bank_transfer">Virement bancaire</option>
-                  <option value="check">Chèque</option>
+                  <option value="">-- Règlement sans facture spécifique --</option>
+                  {availableInvoices.map((inv) => (
+                    <option key={inv.invoice_number} value={inv.invoice_number}>
+                      {inv.invoice_number} — {inv.customer_name} (Reste: {formatCurrency(inv.balance_due || inv.total || 0)})
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* Client Selection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Réf. transaction / Reçu</label>
-                <Input
-                  value={formReceipt}
-                  onChange={(e) => setFormReceipt(e.target.value)}
-                  placeholder="Ex: VIR-STB-9982 ou N° Chèque"
-                  className="h-10 text-sm font-mono"
-                />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nom du Client *</label>
+                <div className="space-y-2">
+                  <select
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
+                    onChange={(e) => setFormCustomer(e.target.value)}
+                    value={availableCustomers.some((c) => c.name === formCustomer) ? formCustomer : ""}
+                  >
+                    <option value="">-- Choisir parmi les clients enregistrés --</option>
+                    {availableCustomers.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <Input
+                    required
+                    value={formCustomer}
+                    onChange={(e) => setFormCustomer(e.target.value)}
+                    placeholder="Nom du client (ou personnalisé)"
+                    className="h-10 text-sm"
+                  />
+                </div>
               </div>
+
+              {/* Amount & Date */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Montant Encaissé (TND) *</label>
+                  <Input
+                    required
+                    type="number"
+                    step="0.001"
+                    min="0.001"
+                    value={formAmount}
+                    onChange={(e) => setFormAmount(e.target.value)}
+                    placeholder="0.000"
+                    className="h-10 text-sm font-mono font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Date d'Encaissement *</label>
+                  <Input
+                    required
+                    type="date"
+                    value={formDate}
+                    onChange={(e) => setFormDate(e.target.value)}
+                    className="h-10 text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Payment Method & Receipt */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Mode de Paiement</label>
+                  <select
+                    value={formMethod}
+                    onChange={(e) => setFormMethod(e.target.value)}
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
+                  >
+                    <option value="cash">Espèces</option>
+                    <option value="bank_transfer">Virement Bancaire</option>
+                    <option value="check">Chèque</option>
+                    <option value="draft">Traite</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">N° Reçu / Transaction</label>
+                  <Input
+                    value={formReceipt}
+                    onChange={(e) => setFormReceipt(e.target.value)}
+                    placeholder="ex: REC-1049, VIR-BNA..."
+                    className="h-10 text-sm font-mono"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes comptables</label>
                 <Input
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
-                  placeholder="Observations éventuelles..."
+                  placeholder="Remarques..."
                   className="h-10 text-sm"
                 />
               </div>
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-xs font-medium"
-                >
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs">
                   Annuler
                 </Button>
                 <Button
                   type="submit"
-                  variant="default"
-                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
+                  disabled={isSubmitting}
+                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9] text-white"
                 >
-                  Enregistrer
+                  {isSubmitting ? "Enregistrement..." : "Enregistrer le règlement"}
                 </Button>
               </div>
             </form>
@@ -463,15 +587,10 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-base">Supprimer ce règlement ?</h4>
-              <p className="text-xs text-slate-500 mt-1">Cette action supprimera le règlement de la trésorerie.</p>
+              <p className="text-xs text-slate-500 mt-1">Cette opération annulera l'enregistrement de ce paiement.</p>
             </div>
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteConfirmId(null)}
-                className="text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">
                 Annuler
               </Button>
               <Button

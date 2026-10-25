@@ -232,6 +232,9 @@ export default function AdminSettingsPage() {
             <h2 className="text-base font-bold text-slate-900">
               Logo de l'Entreprise & Identité Visuelle
             </h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[#0B69FF] border border-blue-200">
+              Admin Requis
+            </span>
           </div>
           {logoSaved && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
@@ -299,7 +302,7 @@ export default function AdminSettingsPage() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`h-28 rounded-xl border-2 border-dashed p-4 flex flex-col items-center justify-center cursor-pointer transition-colors text-center ${
+              className={`rounded-xl border-2 border-dashed p-4 flex flex-col items-center justify-center cursor-pointer transition-colors text-center ${
                 isDragging
                   ? "border-[#0B69FF] bg-blue-50/50"
                   : "border-slate-300 hover:border-[#0B69FF] bg-slate-50/50 hover:bg-slate-50"
@@ -312,6 +315,21 @@ export default function AdminSettingsPage() {
               <p className="text-[10px] text-slate-400 mt-0.5">
                 PNG, JPG, WebP ou SVG (Max. 5 Mo)
               </p>
+              <div className="mt-2.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="text-xs font-semibold gap-1.5 h-7 bg-white"
+                >
+                  <Upload className="h-3 w-3 text-[#0B69FF]" />
+                  <span>Importer un logo depuis l'appareil</span>
+                </Button>
+              </div>
             </div>
 
             {logoPreview && (

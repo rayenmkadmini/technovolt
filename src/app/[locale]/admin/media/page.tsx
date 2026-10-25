@@ -389,23 +389,66 @@ export default function AdminMediaPage() {
                   <p className="text-[11px] text-slate-400 mt-1">
                     PNG, JPG, WebP ou SVG (Max. 5 Mo)
                   </p>
+                  <div className="mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="text-xs font-semibold gap-1.5 h-8 bg-white"
+                    >
+                      <Upload className="h-3.5 w-3.5 text-[#0B69FF]" />
+                      <span>Importer depuis l'appareil</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
 
               {formPreview && (
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-4">
-                  <div className="relative h-14 w-20 rounded bg-white overflow-hidden border border-slate-200">
-                    <Image
-                      src={formPreview}
-                      alt="Aperçu"
-                      fill
-                      unoptimized
-                      className="object-cover"
-                    />
+                <div className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-14 w-20 rounded-lg bg-white overflow-hidden border border-slate-200 shrink-0">
+                      <Image
+                        src={formPreview}
+                        alt="Aperçu"
+                        fill
+                        unoptimized
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="text-xs">
+                      <span className="font-bold text-slate-900 block truncate max-w-[200px]">{formName}</span>
+                      <span className="text-slate-500 font-mono text-[11px]">{formSize}</span>
+                    </div>
                   </div>
-                  <div className="text-xs">
-                    <span className="font-bold text-slate-800 block truncate max-w-xs">{formName}</span>
-                    <span className="text-slate-500 font-mono text-[10px]">{formSize}</span>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[11px] h-7 px-2.5 bg-white"
+                    >
+                      Remplacer
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormPreview(null);
+                        setFormUrl("");
+                        setFormSize("-");
+                        setFormName("");
+                      }}
+                      className="text-[11px] h-7 px-2.5 text-rose-600 hover:bg-rose-50 border-rose-200 bg-white"
+                    >
+                      Supprimer
+                    </Button>
                   </div>
                 </div>
               )}

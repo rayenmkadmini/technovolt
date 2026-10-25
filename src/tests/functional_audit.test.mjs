@@ -5,12 +5,17 @@ import assert from "node:assert/strict";
  * Functional Audit Regression Suite for TechnoVolt
  * Covers:
  * 1. CSV Formula Injection Sanitization (CWE-1236) & UTF-8 BOM
- * 2. Financial Balance & Payment Allocation Integrity
- * 3. Work Order Status Transitions
- * 4. Image Upload MIME Type and Size Constraint Validation
- * 5. Company Logo Persistence Model
- * 6. Floating Client Counter Validation
- * 7. Service Selection Structure (Dropdown without Exposing Internal Costs)
+ * 2. Safe Empty Dataset Handling in CSV Export
+ * 3. Financial Balance & Payment Allocation Integrity
+ * 4. Duplicate Payment Prevention
+ * 5. Work Order Status & Data Validation
+ * 6. Inventory Duplicate SKU & Positive Quantities Validation
+ * 7. Supplier Duplicate Name & Email Validation
+ * 8. Image Upload MIME Type and Size Constraint Validation
+ * 9. Company Logo Persistence Model
+ * 10. Floating Client Counter Validation
+ * 11. Service Selection Structure (Dropdown without Exposing Internal Costs)
+ * 12. Customer Auto-fill Propagation
  */
 
 // Helper mimicking CSV cell escaping logic from src/lib/exportCsv.ts
@@ -31,12 +36,13 @@ function escapeCsvCell(val) {
   return stringVal;
 }
 
-function buildCsvContent(headers, rows) {
+function buildCsvContent(headers, rows = []) {
+  const safeRows = Array.isArray(rows) ? rows : [];
   return (
     "\uFEFF" +
     [
-      headers.map(escapeCsvCell).join(","),
-      ...rows.map((row) => row.map(escapeCsvCell).join(",")),
+      (headers || []).map(escapeCsvCell).join(","),
+      ...safeRows.map((row) => (row || []).map(escapeCsvCell).join(",")),
     ].join("\r\n")
   );
 }
@@ -72,6 +78,12 @@ test("CSV Export - UTF-8 Byte Order Mark (BOM) present for Excel French/Arabic d
   const csv = buildCsvContent(["Client", "Montant (TND)"], [["Société Électricité & Lumière", 450.0]]);
   assert.ok(csv.startsWith("\uFEFF"), "CSV must begin with UTF-8 BOM");
   assert.ok(csv.includes("Société Électricité & Lumière"), "Preserves French accents");
+});
+
+test("CSV Export - Safe handling of empty datasets without throwing", () => {
+  const emptyCsv = buildCsvContent(["Réf", "Client", "Montant"], []);
+  assert.ok(emptyCsv.startsWith("\uFEFF"));
+  assert.equal(emptyCsv, "\uFEFFRéf,Client,Montant");
 });
 
 // 2. FINANCIAL INTEGRITY & PAYMENT ALLOCATIONS
@@ -123,11 +135,47 @@ test("Financial Integrity - Full payment sets balance to 0 and status to paid", 
   assert.equal(updated.status, "paid");
 });
 
-// 3. WORK ORDER LIFECYCLE
+// 3. DUPLICATE PAYMENT DETECTION
+function checkDuplicatePayment(existingPayments, newPayment) {
+  if (newPayment.receipt_reference) {
+    const hasDuplicateReceipt = existingPayments.some(
+      (p) => p.receipt_reference && p.receipt_reference.toLowerCase() === newPayment.receipt_reference.toLowerCase()
+    );
+    if (hasDuplicateReceipt) return { duplicate: true, reason: "receipt_reference" };
+  }
+
+  const hasDuplicateExact = existingPayments.some(
+    (p) =>
+      p.customer_name.toLowerCase() === newPayment.customer_name.toLowerCase() &&
+      p.invoice_number.toLowerCase() === newPayment.invoice_number.toLowerCase() &&
+      p.amount === newPayment.amount &&
+      p.payment_date === newPayment.payment_date
+  );
+  if (hasDuplicateExact) return { duplicate: true, reason: "exact_duplicate" };
+
+  return { duplicate: false };
+}
+
+test("Payment - Rejects duplicate receipt reference or duplicate identical transaction", () => {
+  const existing = [
+    { customer_name: "Sud Équipement", invoice_number: "FAC-001", amount: 500.0, payment_date: "2026-10-25", receipt_reference: "REC-100" },
+  ];
+
+  const duplicateByReceipt = { customer_name: "Autre", invoice_number: "FAC-002", amount: 200.0, payment_date: "2026-10-25", receipt_reference: "rec-100" };
+  assert.equal(checkDuplicatePayment(existing, duplicateByReceipt).duplicate, true);
+
+  const duplicateExact = { customer_name: "sud équipement", invoice_number: "fac-001", amount: 500.0, payment_date: "2026-10-25", receipt_reference: "" };
+  assert.equal(checkDuplicatePayment(existing, duplicateExact).duplicate, true);
+
+  const uniquePayment = { customer_name: "Nouveau Client", invoice_number: "FAC-003", amount: 350.0, payment_date: "2026-10-25", receipt_reference: "REC-101" };
+  assert.equal(checkDuplicatePayment(existing, uniquePayment).duplicate, false);
+});
+
+// 4. WORK ORDER LIFECYCLE
 function validateWorkOrder(workOrder) {
-  const allowedStatuses = ["pending", "in_progress", "completed", "cancelled"];
-  if (!workOrder.title || workOrder.title.trim().length === 0) {
-    return { valid: false, error: "Le titre est requis" };
+  const allowedStatuses = ["pending", "in_progress", "completed", "cancelled", "on_hold"];
+  if (!workOrder.title && !workOrder.description) {
+    return { valid: false, error: "La description est requise" };
   }
   if (!workOrder.customer_name || workOrder.customer_name.trim().length === 0) {
     return { valid: false, error: "Le nom du client est requis" };
@@ -135,31 +183,99 @@ function validateWorkOrder(workOrder) {
   if (!allowedStatuses.includes(workOrder.status)) {
     return { valid: false, error: "Statut invalide" };
   }
-  if (Number(workOrder.estimated_hours) < 0) {
-    return { valid: false, error: "Les heures estimées doivent être positives" };
+  if (Number(workOrder.estimated_hours) < 0 || Number(workOrder.labor_hours) < 0) {
+    return { valid: false, error: "Les heures doivent être positives" };
+  }
+  if (Number(workOrder.total_cost) < 0) {
+    return { valid: false, error: "Le coût total doit être positif" };
   }
   return { valid: true };
 }
 
-test("Work Order - Validates required fields and positive hours", () => {
+test("Work Order - Validates required fields, status and non-negative cost/hours", () => {
   const validWO = {
-    title: "Installation Armoire TGBT",
+    description: "Installation Armoire TGBT",
     customer_name: "Polyclinique El Menzah",
     status: "in_progress",
-    estimated_hours: 8,
+    labor_hours: 8,
+    total_cost: 650.0,
   };
   assert.deepEqual(validateWorkOrder(validWO), { valid: true });
 
   const invalidWO = {
-    title: "",
+    description: "",
     customer_name: "Client",
     status: "pending",
-    estimated_hours: 5,
+    labor_hours: -2,
+    total_cost: -100,
   };
   assert.equal(validateWorkOrder(invalidWO).valid, false);
 });
 
-// 4. IMAGE UPLOAD & MIME TYPE / FILE SIZE VALIDATION
+// 5. INVENTORY VALIDATION & DUPLICATE SKU CHECK
+function validateProductItem(existingProducts, product) {
+  if (!product.name || !product.name.trim()) {
+    return { valid: false, error: "Le nom de l'article est requis" };
+  }
+  if (!product.sku || !product.sku.trim()) {
+    return { valid: false, error: "La référence SKU est requise" };
+  }
+  const isDuplicateSku = existingProducts.some(
+    (p) => p.sku.trim().toLowerCase() === product.sku.trim().toLowerCase()
+  );
+  if (isDuplicateSku) {
+    return { valid: false, error: "La référence SKU existe déjà" };
+  }
+  if (Number(product.quantity) < 0) {
+    return { valid: false, error: "La quantité doit être positive ou nulle" };
+  }
+  return { valid: true };
+}
+
+test("Inventory - Detects duplicate SKU and rejects negative stock", () => {
+  const existing = [{ sku: "DISJ-HAG-16A", name: "Disjoncteur Hager 16A", quantity: 20 }];
+
+  const duplicateSku = { sku: "disj-hag-16a", name: "Autre Disjoncteur", quantity: 5 };
+  assert.equal(validateProductItem(existing, duplicateSku).valid, false);
+
+  const negativeQty = { sku: "DIFF-SCH-40A", name: "Différentiel", quantity: -1 };
+  assert.equal(validateProductItem(existing, negativeQty).valid, false);
+
+  const validProduct = { sku: "DIFF-SCH-40A", name: "Différentiel Schneider 40A", quantity: 10 };
+  assert.equal(validateProductItem(existing, validProduct).valid, true);
+});
+
+// 6. SUPPLIER VALIDATION & DUPLICATE CHECK
+function validateSupplierItem(existingSuppliers, supplier) {
+  if (!supplier.name || !supplier.name.trim()) {
+    return { valid: false, error: "Le nom commercial est requis" };
+  }
+  const isDuplicate = existingSuppliers.some(
+    (s) => s.name.trim().toLowerCase() === supplier.name.trim().toLowerCase()
+  );
+  if (isDuplicate) {
+    return { valid: false, error: "Le fournisseur existe déjà" };
+  }
+  if (supplier.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supplier.email.trim())) {
+    return { valid: false, error: "Email invalide" };
+  }
+  return { valid: true };
+}
+
+test("Supplier - Validates required name, duplicate detection and email format", () => {
+  const existing = [{ name: "Comptoir Électrique du Sud", email: "contact@comptoir.tn" }];
+
+  const duplicateName = { name: "comptoir électrique du sud", email: "autre@test.tn" };
+  assert.equal(validateSupplierItem(existing, duplicateName).valid, false);
+
+  const invalidEmail = { name: "Nouveau Fournisseur", email: "mauvais-format" };
+  assert.equal(validateSupplierItem(existing, invalidEmail).valid, false);
+
+  const validSupp = { name: "Nouveau Fournisseur", email: "contact@fournisseur.tn" };
+  assert.equal(validateSupplierItem(existing, validSupp).valid, true);
+});
+
+// 7. IMAGE UPLOAD & MIME TYPE / FILE SIZE VALIDATION
 const ALLOWED_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -198,7 +314,7 @@ test("Image Upload - Rejects files exceeding 5MB size limit", () => {
   assert.ok(result.error.includes("5 Mo"));
 });
 
-// 5. FLOATING CLIENT COUNTER NUMERIC PARSING & FALLBACK
+// 8. FLOATING CLIENT COUNTER NUMERIC PARSING & FALLBACK
 function parseClientCount(storedValue) {
   if (!storedValue) return 500;
   const parsed = parseInt(storedValue, 10);
@@ -214,7 +330,7 @@ test("Client Counter - Fallback and integer validation", () => {
   assert.equal(parseClientCount("1200"), 1200);
 });
 
-// 6. SERVICE SELECTION DROPDOWN WITHOUT PRICES
+// 9. SERVICE SELECTION DROPDOWN WITHOUT PRICES
 test("Service Selection Dropdown - Options render service labels and descriptions without displaying prices", () => {
   const services = [
     { id: "depannage", label: "Dépannage d'urgence 24/7", description: "Intervention rapide en cas de panne" },
@@ -224,9 +340,7 @@ test("Service Selection Dropdown - Options render service labels and description
   ];
 
   services.forEach((service) => {
-    // Dropdown items must have a clear descriptive label
     assert.ok(service.label.length > 0);
-    // Must NOT contain monetary indications (DT, TND, millimes, €) in the public service selector
     assert.doesNotMatch(service.label, /(?:TND|DT|\d+\s*(?:DT|TND|dinars|€|\$))/i);
   });
 });

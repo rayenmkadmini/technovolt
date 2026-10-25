@@ -7,14 +7,14 @@ import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import {
   Truck,
   Plus,
-  Phone,
-  Mail,
-  MapPin,
-  Building,
   Trash2,
   X,
   CheckCircle2,
   Search,
+  Phone,
+  Mail,
+  MapPin,
+  AlertCircle,
 } from "lucide-react";
 
 export interface SupplierItem {
@@ -34,23 +34,34 @@ const STORAGE_KEY = "technovolt_admin_suppliers";
 const defaultDemoSuppliers: SupplierItem[] = [
   {
     id: "supp-01",
-    name: "Comptoir Sud Électrique (CSE)",
-    contact_person: "M. Radhouane",
-    phone: "+216 75 765 890",
-    email: "contact@comptoir-sud.tn",
+    name: "Comptoir Électrique du Sud",
+    contact_person: "M. Adel Mabrouk",
+    phone: "+216 75 760 300",
+    email: "commercial@comptoir-sud.tn",
     address: "Route de Médenine Km 2, Tataouine",
-    notes: "Distributeur agréé Schneider Electric & Legrand. Remise pro 22%.",
+    notes: "Distributeur officiel Legrand, Hager, Schneider Electric",
     outstanding_amount: 0,
     is_active: true,
   },
   {
     id: "supp-02",
-    name: "Quincaillerie & Fluides du Sud",
-    contact_person: "M. Salem B.",
-    phone: "+216 75 760 340",
-    email: "salem.quincaillerie@gmail.com",
-    address: "Cité Ennour, Tataouine",
-    notes: "Fournisseur outillage Milwaukee, tubes cuivre et fluides frigorigènes R410A / R32.",
+    name: "Grossiste Climatisation Gabès",
+    contact_person: "M. Tarek Yahia",
+    phone: "+216 75 271 450",
+    email: "clima.sud@gnet.tn",
+    address: "Zone Industrielle, Gabès",
+    notes: "Fournisseur compresseurs, gaz R410A / R32 et liaisons frigorifiques",
+    outstanding_amount: 0,
+    is_active: true,
+  },
+  {
+    id: "supp-03",
+    name: "Station Agil Tataouine",
+    contact_person: "Service Flotte",
+    phone: "+216 75 761 020",
+    email: "agil.tataouine@agil.com.tn",
+    address: "Avenue Habib Bourguiba, Tataouine",
+    notes: "Compte carburant utilitaires chantier",
     outstanding_amount: 0,
     is_active: true,
   },
@@ -72,6 +83,8 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
   const [formEmail, setFormEmail] = useState("");
   const [formAddress, setFormAddress] = useState("");
   const [formNotes, setFormNotes] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -101,6 +114,7 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
     setSuppliers(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("storage"));
     } catch (e) {
       console.error("save suppliers failed", e);
     }
@@ -108,10 +122,29 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     if (!formName.trim()) {
-      alert("Veuillez saisir le nom du fournisseur.");
+      setFormError("Veuillez saisir le nom commercial du fournisseur.");
       return;
     }
+
+    // Check duplicate supplier name
+    const isDuplicate = suppliers.some(
+      (s) => s.name.trim().toLowerCase() === formName.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setFormError(`Le fournisseur "${formName.trim()}" existe déjà dans votre répertoire.`);
+      return;
+    }
+
+    // Email format validation if email is provided
+    if (formEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formEmail.trim())) {
+      setFormError("Veuillez saisir une adresse email valide.");
+      return;
+    }
+
+    setIsSubmitting(true);
     const newSupp: SupplierItem = {
       id: `supp-${Date.now()}`,
       name: formName.trim(),
@@ -123,15 +156,20 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
       outstanding_amount: 0,
       is_active: true,
     };
+
     save([newSupp, ...suppliers]);
-    showToast("Fournisseur ajouté avec succès !");
+    setIsSubmitting(false);
+    showToast(`Fournisseur "${newSupp.name}" ajouté avec succès !`);
     setIsModalOpen(false);
+
+    // Reset
     setFormName("");
     setFormContact("");
     setFormPhone("");
     setFormEmail("");
     setFormAddress("");
     setFormNotes("");
+    setFormError(null);
   };
 
   const handleDelete = (id: string) => {
@@ -144,7 +182,8 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
     return (
       supp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       supp.contact_person.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      supp.address.toLowerCase().includes(searchTerm.toLowerCase())
+      supp.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      supp.phone.includes(searchTerm)
     );
   });
 
@@ -185,44 +224,43 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
           />
 
           <Button
-            variant="default"
-            size="sm"
-            className="gap-1.5 font-semibold text-xs bg-[#0B69FF] hover:bg-[#094FC9]"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setFormError(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-[#0B69FF] hover:bg-[#094FC9] text-white gap-2 font-bold px-5"
           >
             <Plus className="h-4 w-4" />
-            <span>Nouveau Fournisseur</span>
+            <span>Nouveau fournisseur</span>
           </Button>
         </div>
       </div>
 
       {/* Search */}
       <div className="bg-white p-4 rounded-xl border border-slate-200">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute start-3 top-2.5 h-4 w-4 text-slate-400" />
+        <div className="relative">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Rechercher fournisseur, contact, ville..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ps-9 h-9 text-xs"
+            placeholder="Rechercher par nom de fournisseur, contact, adresse..."
+            className="ps-9 h-10 text-sm"
           />
         </div>
       </div>
 
-      {/* Suppliers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredSuppliers.map((supp) => (
-          <div key={supp.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs space-y-4 hover:border-[#0B69FF] transition-colors">
+          <div
+            key={supp.id}
+            className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-[#0B69FF]/50 transition-all space-y-4"
+          >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Building className="h-5 w-5 text-[#0B69FF]" />
-                  <span>{supp.name}</span>
-                </h2>
+                <h3 className="font-bold text-slate-900 text-base">{supp.name}</h3>
                 {supp.contact_person && (
-                  <div className="text-xs text-slate-500 mt-1">
-                    Contact commercial : <strong>{supp.contact_person}</strong>
-                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5 font-medium">Contact : {supp.contact_person}</p>
                 )}
               </div>
               <button
@@ -256,7 +294,9 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
             </div>
 
             {supp.notes && (
-              <p className="text-xs text-slate-500 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">{supp.notes}</p>
+              <p className="text-xs text-slate-500 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                {supp.notes}
+              </p>
             )}
           </div>
         ))}
@@ -265,47 +305,99 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Modal Nouveau Fournisseur */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Plus className="h-5 w-5 text-[#0B69FF]" />
                 <span>Nouveau Fournisseur</span>
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleAdd} className="space-y-4">
+
+            {formError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleAdd} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Nom commercial *</label>
-                <Input required value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Comptoir Électrique du Sud" className="h-10 text-sm" />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nom commercial du fournisseur *</label>
+                <Input
+                  required
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="ex: Comptoir Électrique du Sud"
+                  className="h-10 text-sm"
+                />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Contact</label>
-                <Input value={formContact} onChange={(e) => setFormContact(e.target.value)} placeholder="Mr. Hichem" className="h-10 text-sm" />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Interlocuteur / Contact</label>
+                <Input
+                  value={formContact}
+                  onChange={(e) => setFormContact(e.target.value)}
+                  placeholder="ex: M. Hichem"
+                  className="h-10 text-sm"
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Téléphone</label>
-                <Input value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="+216 75 000 000" className="h-10 text-sm font-mono" />
+                <Input
+                  value={formPhone}
+                  onChange={(e) => setFormPhone(e.target.value)}
+                  placeholder="+216 75 ..."
+                  className="h-10 text-sm font-mono"
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
-                <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="contact@fournisseur.tn" className="h-10 text-sm" />
+                <Input
+                  type="email"
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
+                  placeholder="contact@fournisseur.tn"
+                  className="h-10 text-sm"
+                />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Adresse</label>
-                <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder="Zone Industrielle, Tataouine" className="h-10 text-sm" />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Adresse / Ville</label>
+                <Input
+                  value={formAddress}
+                  onChange={(e) => setFormAddress(e.target.value)}
+                  placeholder="Zone Industrielle, Tataouine"
+                  className="h-10 text-sm"
+                />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes</label>
-                <Input value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Observations..." className="h-10 text-sm" />
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes / Produits fournis</label>
+                <Input
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  placeholder="Distributeur disjoncteurs, câbles..."
+                  className="h-10 text-sm"
+                />
               </div>
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs font-medium">Annuler</Button>
-                <Button type="submit" variant="default" className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]">Enregistrer</Button>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs">
+                  Annuler
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9] text-white"
+                >
+                  {isSubmitting ? "Enregistrement..." : "Enregistrer le fournisseur"}
+                </Button>
               </div>
             </form>
           </div>
@@ -324,8 +416,17 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
               <p className="text-xs text-slate-500 mt-1">Cette action supprimera le fournisseur de votre carnet d'adresses.</p>
             </div>
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">Annuler</Button>
-              <Button variant="destructive" size="sm" onClick={() => handleDelete(deleteConfirmId)} className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white">Oui, supprimer</Button>
+              <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(deleteConfirmId)}
+                className="text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Oui, supprimer
+              </Button>
             </div>
           </div>
         </div>

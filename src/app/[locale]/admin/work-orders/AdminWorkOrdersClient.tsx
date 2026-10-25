@@ -6,6 +6,7 @@ import { Input, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
 import {
   Wrench,
   Plus,
@@ -14,7 +15,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Search,
-  Clock,
 } from "lucide-react";
 
 export interface WorkOrderItem {
@@ -22,6 +22,7 @@ export interface WorkOrderItem {
   job_number: string;
   customer_name: string;
   customer_phone?: string;
+  service_title?: string;
   description: string;
   status: "pending" | "in_progress" | "completed" | "on_hold" | "cancelled";
   start_date: string;
@@ -41,6 +42,7 @@ const initialDemoWorkOrders: WorkOrderItem[] = [
     job_number: "OT-2026-0012",
     customer_name: "Société Sud Équipement",
     customer_phone: "+216 75 760 111",
+    service_title: "Installation Tableau Électrique & TGBT",
     description: "Installation armoire générale de distribution et câblage atelier",
     status: "in_progress",
     start_date: "2026-10-20",
@@ -56,6 +58,7 @@ const initialDemoWorkOrders: WorkOrderItem[] = [
     job_number: "OT-2026-0011",
     customer_name: "M. Hichem Ben Amor",
     customer_phone: "+216 98 443 210",
+    service_title: "Mise à la terre & Contrôle de Conformité STEG",
     description: "Raccordement tableau villa R+1 et mise à la terre",
     status: "completed",
     start_date: "2026-10-15",
@@ -68,22 +71,46 @@ const initialDemoWorkOrders: WorkOrderItem[] = [
   },
 ];
 
-export function AdminWorkOrdersClient({ locale }: { locale: string }) {
+const fallbackServicesList = [
+  "Installation Tableau Électrique & TGBT",
+  "Dépannage & Recherche de Panne 24/7",
+  "Rénovation Électrique Complète (NFC 15-100)",
+  "Installation & Recharge Climatiseur",
+  "Domotique & Éclairage Intelligent",
+  "Mise à la terre & Contrôle de Conformité STEG",
+];
+
+const techniciansList = [
+  "Tarak B. (Chef de chantier)",
+  "Kais M. (Spécialiste Froid & Câblage)",
+  "Mounir R. (Domotique & Réseaux)",
+  "Équipe Technique Chantier",
+];
+
+export function AdminWorkOrdersClient({ locale: _locale }: { locale: string }) {
   const [workOrders, setWorkOrders] = useState<WorkOrderItem[]>(initialDemoWorkOrders);
+  const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string }[]>(
+    defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone }))
+  );
+  const [availableServices, setAvailableServices] = useState<string[]>(fallbackServicesList);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
+  const [formJobNumber, setFormJobNumber] = useState("");
   const [formCustomer, setFormCustomer] = useState("");
   const [formPhone, setFormPhone] = useState("");
+  const [formService, setFormService] = useState(fallbackServicesList[0]);
   const [formDesc, setFormDesc] = useState("");
-  const [formTech, setFormTech] = useState("");
-  const [formHours, setFormHours] = useState("4");
-  const [formCost, setFormCost] = useState("250");
+  const [formTech, setFormTech] = useState(techniciansList[0]);
+  const [formHours, setFormHours] = useState("6");
+  const [formCost, setFormCost] = useState("350");
   const [formStatus, setFormStatus] = useState<WorkOrderItem["status"]>("in_progress");
   const [formStartDate, setFormStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [formEndDate, setFormEndDate] = useState("");
@@ -92,11 +119,35 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
+        // 1. Work orders
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setWorkOrders(parsed);
+          } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDemoWorkOrders));
+          }
+        } else {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDemoWorkOrders));
+        }
+
+        // 2. Customers
+        const custRaw = localStorage.getItem("technovolt_admin_customers");
+        if (custRaw) {
+          const parsedCust = JSON.parse(custRaw);
+          if (Array.isArray(parsedCust) && parsedCust.length > 0) {
+            setAvailableCustomers(parsedCust.map((c: any) => ({ name: c.full_name, phone: c.phone || "" })));
+          }
+        }
+
+        // 3. Services
+        const srvRaw = localStorage.getItem("technovolt_admin_services");
+        if (srvRaw) {
+          const parsedSrv = JSON.parse(srvRaw);
+          if (Array.isArray(parsedSrv) && parsedSrv.length > 0) {
+            const titles = parsedSrv.map((s: any) => s.title || s.name).filter(Boolean);
+            if (titles.length > 0) setAvailableServices(titles);
           }
         }
       } catch {}
@@ -116,12 +167,34 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const openNewOrderModal = () => {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    setFormJobNumber(`OT-${new Date().getFullYear()}-${randomSuffix}`);
+    setFormError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCustomerSelect = (custName: string) => {
+    setFormCustomer(custName);
+    const found = availableCustomers.find((c) => c.name === custName);
+    if (found && found.phone) {
+      setFormPhone(found.phone);
+    }
+  };
+
+  const handleServiceSelect = (serviceTitle: string) => {
+    setFormService(serviceTitle);
+    if (!formDesc) {
+      setFormDesc(`Exécution de la prestation : ${serviceTitle}`);
+    }
+  };
+
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
     if (!formCustomer.trim()) {
-      setFormError("Veuillez renseigner le nom du client.");
+      setFormError("Veuillez renseigner ou sélectionner le nom du client.");
       return;
     }
     if (!formDesc.trim()) {
@@ -130,6 +203,11 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
     }
     if (!formStartDate) {
       setFormError("Veuillez indiquer la date de début du chantier.");
+      return;
+    }
+
+    if (formEndDate && formEndDate < formStartDate) {
+      setFormError("La date de fin estimée ne peut pas être antérieure à la date de début.");
       return;
     }
 
@@ -145,35 +223,36 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
       return;
     }
 
-    const newJobNumber = `OT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-
+    setIsSubmitting(true);
     const newWorkOrder: WorkOrderItem = {
       id: `wo-${Date.now()}`,
-      job_number: newJobNumber,
+      job_number: formJobNumber || `OT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       customer_name: formCustomer.trim(),
-      customer_phone: formPhone.trim() || undefined,
+      customer_phone: formPhone.trim(),
+      service_title: formService,
       description: formDesc.trim(),
-      technician_name: formTech.trim() || undefined,
       status: formStatus,
       start_date: formStartDate,
       completion_date: formEndDate || undefined,
       labor_hours: hours,
-      total_cost: cost,
-      notes: formNotes.trim() || undefined,
+      total_cost: Math.round(cost * 1000) / 1000,
+      technician_name: formTech.trim(),
+      notes: formNotes.trim(),
       created_at: new Date().toISOString(),
     };
 
     saveWorkOrders([newWorkOrder, ...workOrders]);
-    showToast("Nouvel ordre de travail enregistré !");
+    setIsSubmitting(false);
+    showToast(`Ordre de travail ${newWorkOrder.job_number} créé avec succès !`);
     setIsModalOpen(false);
 
-    // Reset form
+    // Reset fields
     setFormCustomer("");
     setFormPhone("");
     setFormDesc("");
-    setFormTech("");
-    setFormHours("4");
-    setFormCost("250");
+    setFormTech(techniciansList[0]);
+    setFormHours("6");
+    setFormCost("350");
     setFormStatus("in_progress");
     setFormStartDate(new Date().toISOString().slice(0, 10));
     setFormEndDate("");
@@ -189,16 +268,34 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
 
   const filteredOrders = workOrders.filter((wo) => {
     const matchesSearch =
-      wo.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       wo.job_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      wo.description.toLowerCase().includes(searchTerm.toLowerCase());
+      wo.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      wo.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (wo.technician_name && wo.technician_name.toLowerCase().includes(searchTerm.toLowerCase()));
+
     const matchesStatus = statusFilter === "all" || wo.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  const getStatusBadge = (status: WorkOrderItem["status"]) => {
+    switch (status) {
+      case "in_progress":
+        return <Badge variant="warning">En cours</Badge>;
+      case "completed":
+        return <Badge variant="success">Terminé</Badge>;
+      case "pending":
+        return <Badge variant="secondary">En attente</Badge>;
+      case "on_hold":
+        return <Badge variant="danger">Suspendu</Badge>;
+      case "cancelled":
+        return <Badge variant="danger">Annulé</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Toast */}
       {toastMessage && (
         <div className="fixed bottom-5 end-5 z-50 bg-[#0B69FF] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-semibold animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -211,10 +308,10 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
             <Wrench className="h-6 w-6 text-[#0B69FF]" />
-            <span>Ordres de Travail & Chantiers (Work Orders)</span>
+            <span>Ordres de Travail & Interventions Chantier</span>
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Suivi opérationnel des chantiers en cours, temps passé et fournitures utilisées à Tataouine
+            Suivi des chantiers électriques, rénovations et interventions techniques à Tataouine
           </p>
         </div>
 
@@ -222,52 +319,61 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
           <ExportCsvButton
             filename="ordres-de-travail-technovolt"
             label="Exporter CSV"
-            headers={["N° Ordre", "Client", "Description", "Heures MO", "Coût Total (TND)", "Statut", "Début", "Fin"]}
+            headers={[
+              "N° Ordre",
+              "Client",
+              "Téléphone",
+              "Prestation",
+              "Description",
+              "Statut",
+              "Début",
+              "Fin",
+              "Heures",
+              "Coût Total (TND)",
+              "Technicien",
+            ]}
             rows={filteredOrders.map((wo) => [
               wo.job_number,
               wo.customer_name,
+              wo.customer_phone || "",
+              wo.service_title || "",
               wo.description,
-              wo.labor_hours,
-              wo.total_cost,
               wo.status,
               wo.start_date,
-              wo.completion_date || "-",
+              wo.completion_date || "",
+              wo.labor_hours,
+              wo.total_cost,
+              wo.technician_name || "",
             ])}
           />
 
           <Button
-            variant="default"
-            size="sm"
-            className="gap-1.5 font-semibold text-xs bg-[#0B69FF] hover:bg-[#094FC9]"
-            onClick={() => {
-              setFormError(null);
-              setIsModalOpen(true);
-            }}
+            onClick={openNewOrderModal}
+            className="bg-[#0B69FF] hover:bg-[#094FC9] text-white gap-2 font-bold px-5"
           >
             <Plus className="h-4 w-4" />
-            <span>Nouvel Ordre de Travail</span>
+            <span>Nouvel ordre de travail</span>
           </Button>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute start-3 top-2.5 h-4 w-4 text-slate-400" />
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Rechercher chantier, client, N° ordre..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ps-9 h-9 text-xs"
+            placeholder="Rechercher par N° OT, client, description, technicien..."
+            className="ps-9 h-10 text-sm"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs text-slate-500 font-medium">Statut :</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-slate-200 text-xs bg-white text-slate-700"
+            className="h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
           >
             <option value="all">Tous les statuts</option>
             <option value="in_progress">En cours</option>
@@ -279,105 +385,60 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
         </div>
       </div>
 
-      {/* Work Orders Table */}
+      {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-start text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+          <table className="w-full text-start text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-4 py-3.5 text-start">N° Ordre</th>
-                <th className="px-4 py-3.5 text-start">Client</th>
-                <th className="px-4 py-3.5 text-start">Description des Travaux</th>
-                <th className="px-4 py-3.5 text-center">Heures MO</th>
-                <th className="px-4 py-3.5 text-end">Coût Total</th>
-                <th className="px-4 py-3.5 text-center">Statut</th>
-                <th className="px-4 py-3.5 text-start">Dates</th>
-                <th className="px-4 py-3.5 text-center">Actions</th>
+                <th className="py-3 px-4 text-start">N° Ordre</th>
+                <th className="py-3 px-4 text-start">Client</th>
+                <th className="py-3 px-4 text-start">Description des Travaux</th>
+                <th className="py-3 px-4 text-center">Statut</th>
+                <th className="py-3 px-4 text-start">Période</th>
+                <th className="py-3 px-4 text-end">Heures</th>
+                <th className="py-3 px-4 text-end">Coût Total</th>
+                <th className="py-3 px-4 text-start">Responsable</th>
+                <th className="py-3 px-4 text-end">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredOrders.map((wo) => (
                 <tr key={wo.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-4 py-4 font-mono font-bold text-[#0B69FF]">
-                    {wo.job_number}
+                  <td className="py-3 px-4 font-mono font-bold text-[#0B69FF]">{wo.job_number}</td>
+                  <td className="py-3 px-4">
+                    <div className="font-bold text-slate-900 text-sm">{wo.customer_name}</div>
+                    {wo.customer_phone && <div className="text-[11px] text-slate-500 font-mono">{wo.customer_phone}</div>}
                   </td>
-
-                  <td className="px-4 py-4 font-bold text-slate-900 text-sm">
-                    <div>{wo.customer_name}</div>
-                    {wo.customer_phone && (
-                      <div className="text-[11px] font-mono text-slate-400 font-normal">
-                        {wo.customer_phone}
-                      </div>
+                  <td className="py-3 px-4 max-w-xs">
+                    {wo.service_title && (
+                      <div className="text-[11px] font-semibold text-slate-800 line-clamp-1">{wo.service_title}</div>
                     )}
+                    <div className="text-slate-600 line-clamp-2">{wo.description}</div>
                   </td>
-
-                  <td className="px-4 py-4 max-w-sm">
-                    <p className="font-medium text-slate-800">{wo.description}</p>
-                    {wo.technician_name && (
-                      <p className="text-[11px] text-blue-600 font-semibold mt-0.5">
-                        Tech : {wo.technician_name}
-                      </p>
-                    )}
-                    {wo.notes && (
-                      <p className="text-[11px] text-slate-500 italic mt-0.5">{wo.notes}</p>
-                    )}
+                  <td className="py-3 px-4 text-center">{getStatusBadge(wo.status)}</td>
+                  <td className="py-3 px-4 text-slate-600 whitespace-nowrap">
+                    <div>Du: {wo.start_date}</div>
+                    {wo.completion_date && <div className="text-slate-400 text-[11px]">Au: {wo.completion_date}</div>}
                   </td>
-
-                  <td className="px-4 py-4 text-center font-mono">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-slate-400" />
-                      {wo.labor_hours} h
-                    </span>
-                  </td>
-
-                  <td className="px-4 py-4 text-end font-bold text-slate-900">
-                    {formatCurrency(wo.total_cost, locale)}
-                  </td>
-
-                  <td className="px-4 py-4 text-center">
-                    <Badge
-                      variant={
-                        wo.status === "completed"
-                          ? "success"
-                          : wo.status === "in_progress"
-                          ? "warning"
-                          : "secondary"
-                      }
-                      className="text-[10px]"
-                    >
-                      {wo.status === "completed"
-                        ? "Terminé"
-                        : wo.status === "in_progress"
-                        ? "En cours"
-                        : wo.status === "pending"
-                        ? "En attente"
-                        : wo.status === "on_hold"
-                        ? "Suspendu"
-                        : "Annulé"}
-                    </Badge>
-                  </td>
-
-                  <td className="px-4 py-4 text-slate-500 text-[11px]">
-                    <div>Début : {wo.start_date}</div>
-                    {wo.completion_date && <div>Fin : {wo.completion_date}</div>}
-                  </td>
-
-                  <td className="px-4 py-4 text-center">
+                  <td className="py-3 px-4 text-end font-semibold text-slate-800">{wo.labor_hours} h</td>
+                  <td className="py-3 px-4 text-end font-bold text-slate-900">{formatCurrency(wo.total_cost)}</td>
+                  <td className="py-3 px-4 text-slate-700 font-medium">{wo.technician_name || "—"}</td>
+                  <td className="py-3 px-4 text-end">
                     <button
                       onClick={() => setDeleteConfirmId(wo.id)}
-                      className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 transition-colors"
-                      title="Supprimer l'ordre de travail"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                      title="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
               ))}
-
               {filteredOrders.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-slate-400 text-xs">
-                    Aucun ordre de travail ne correspond aux critères.
+                  <td colSpan={9} className="py-12 text-center text-slate-400 text-xs">
+                    Aucun ordre de travail trouvé pour ces critères.
                   </td>
                 </tr>
               )}
@@ -386,15 +447,18 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
         </div>
       </div>
 
-      {/* New Work Order Modal */}
+      {/* Modal Nouvel Ordre de Travail */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-[#0B69FF]" />
-                <span>Nouvel Ordre de Travail</span>
-              </h3>
+                <h3 className="text-lg font-bold text-slate-900">Nouvel Ordre de Travail (OT)</h3>
+                <span className="font-mono text-xs bg-blue-50 text-[#0B69FF] px-2 py-0.5 rounded font-bold">
+                  {formJobNumber}
+                </span>
+              </div>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
@@ -411,28 +475,58 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
             )}
 
             <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Client *</label>
-                  <Input
-                    required
-                    value={formCustomer}
-                    onChange={(e) => setFormCustomer(e.target.value)}
-                    placeholder="Ex: Société Sud Équipement"
-                    className="h-10 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Téléphone</label>
-                  <Input
-                    value={formPhone}
-                    onChange={(e) => setFormPhone(e.target.value)}
-                    placeholder="+216 XX XXX XXX"
-                    className="h-10 text-sm font-mono"
-                  />
+              {/* Customer Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Client Donneur d'Ordre *</label>
+                <div className="space-y-2">
+                  <select
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
+                    onChange={(e) => handleCustomerSelect(e.target.value)}
+                    value={availableCustomers.some((c) => c.name === formCustomer) ? formCustomer : ""}
+                  >
+                    <option value="">-- Choisir parmi les clients enregistrés --</option>
+                    {availableCustomers.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name} ({c.phone || "Pas de tél"})
+                      </option>
+                    ))}
+                  </select>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Input
+                      required
+                      value={formCustomer}
+                      onChange={(e) => setFormCustomer(e.target.value)}
+                      placeholder="Nom du client (ou personnalisé)"
+                      className="h-10 text-sm"
+                    />
+                    <Input
+                      value={formPhone}
+                      onChange={(e) => setFormPhone(e.target.value)}
+                      placeholder="Tél client (+216...)"
+                      className="h-10 text-sm font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
+              {/* Service Selection */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Prestation Concernée *</label>
+                <select
+                  value={formService}
+                  onChange={(e) => handleServiceSelect(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
+                >
+                  {availableServices.map((srv) => (
+                    <option key={srv} value={srv}>
+                      {srv}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Description */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Description des Travaux *</label>
                 <Textarea
@@ -440,61 +534,45 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
                   rows={3}
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
-                  placeholder="Ex: Remplacement disjoncteur général, tirage câble triphasé..."
+                  placeholder="Détaillez les tâches électriques, fournitures requises, consignes particulières..."
                   className="text-sm"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Responsable & Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Technicien assigné</label>
-                  <Input
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Technicien Responsable</label>
+                  <select
                     value={formTech}
                     onChange={(e) => setFormTech(e.target.value)}
-                    placeholder="Ex: Tarak B."
-                    className="h-10 text-sm"
-                  />
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
+                  >
+                    {techniciansList.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Heures MO (h) *</label>
-                  <Input
-                    required
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={formHours}
-                    onChange={(e) => setFormHours(e.target.value)}
-                    className="h-10 text-sm font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Coût Total (TND) *</label>
-                  <Input
-                    required
-                    type="number"
-                    step="0.001"
-                    min="0"
-                    value={formCost}
-                    onChange={(e) => setFormCost(e.target.value)}
-                    className="h-10 text-sm font-mono"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Statut</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Statut Initial</label>
                   <select
                     value={formStatus}
                     onChange={(e) => setFormStatus(e.target.value as any)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white"
+                    className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0B69FF]"
                   >
                     <option value="in_progress">En cours</option>
-                    <option value="completed">Terminé</option>
                     <option value="pending">En attente</option>
+                    <option value="completed">Terminé</option>
                     <option value="on_hold">Suspendu</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Date de début *</label>
                   <Input
@@ -506,7 +584,7 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Date de fin prévue</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Date de fin estimée</label>
                   <Input
                     type="date"
                     value={formEndDate}
@@ -516,31 +594,52 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
                 </div>
               </div>
 
+              {/* Hours & Cost */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Heures estimées</label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={formHours}
+                    onChange={(e) => setFormHours(e.target.value)}
+                    className="h-10 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Coût total estimé (TND)</label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formCost}
+                    onChange={(e) => setFormCost(e.target.value)}
+                    className="h-10 text-sm"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes et fournitures utilisées</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Notes et contraintes d'accès</label>
                 <Input
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
-                  placeholder="Ex: Câble R2V 3x2.5, disjoncteur Schneider 16A..."
+                  placeholder="ex: Clé chez le gardien, couper disjoncteur général avant..."
                   className="h-10 text-sm"
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-xs font-medium"
-                >
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="text-xs">
                   Annuler
                 </Button>
                 <Button
                   type="submit"
-                  variant="default"
-                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
+                  disabled={isSubmitting}
+                  className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9] text-white"
                 >
-                  Enregistrer l'Ordre
+                  {isSubmitting ? "Création..." : "Valider l'ordre de travail"}
                 </Button>
               </div>
             </form>
@@ -548,7 +647,7 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete confirmation */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4">
@@ -557,15 +656,10 @@ export function AdminWorkOrdersClient({ locale }: { locale: string }) {
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-base">Supprimer cet ordre de travail ?</h4>
-              <p className="text-xs text-slate-500 mt-1">Cette action supprimera l'ordre de travail de la liste.</p>
+              <p className="text-xs text-slate-500 mt-1">Cette action est irréversible.</p>
             </div>
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteConfirmId(null)}
-                className="text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">
                 Annuler
               </Button>
               <Button

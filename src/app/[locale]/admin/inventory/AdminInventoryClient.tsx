@@ -94,6 +94,7 @@ export function AdminInventoryClient({ initialProducts }: Props) {
   const [formError, setFormError] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -135,6 +136,15 @@ export function AdminInventoryClient({ initialProducts }: Props) {
       return;
     }
 
+    // Check duplicate SKU
+    const isDuplicate = products.some(
+      (p) => p.sku.trim().toLowerCase() === formSku.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setFormError(`La référence SKU "${formSku.trim()}" existe déjà dans votre inventaire.`);
+      return;
+    }
+
     const qty = parseInt(formQty, 10);
     const purchase = parseFloat(formPurchase);
     const sale = parseFloat(formSale);
@@ -145,6 +155,7 @@ export function AdminInventoryClient({ initialProducts }: Props) {
       return;
     }
 
+    setIsSubmitting(true);
     const newProd: ProductItem = {
       id: `prod-${Date.now()}`,
       sku: formSku.trim(),
@@ -160,7 +171,8 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     };
 
     save([newProd, ...products]);
-    showToast("Article ajouté au stock avec succès !");
+    setIsSubmitting(false);
+    showToast(`Article "${newProd.name}" (${newProd.sku}) ajouté au stock !`);
     setIsModalOpen(false);
     setFormName("");
     setFormSku("");
@@ -442,9 +454,10 @@ export function AdminInventoryClient({ initialProducts }: Props) {
                 <Button
                   type="submit"
                   variant="default"
+                  disabled={isSubmitting}
                   className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
                 >
-                  Enregistrer
+                  {isSubmitting ? "Enregistrement..." : "Enregistrer l'article"}
                 </Button>
               </div>
             </form>
