@@ -84,9 +84,9 @@ export function AdminInvoicesClient({ locale }: { locale: string }) {
     const timer = setTimeout(() => {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setInvoices(parsed);
             return;
           }
@@ -102,6 +102,7 @@ export function AdminInvoicesClient({ locale }: { locale: string }) {
     setInvoices(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("storage"));
     } catch {}
   };
 

@@ -100,9 +100,9 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     const timer = setTimeout(() => {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setProducts(parsed);
             return;
           }
@@ -122,6 +122,7 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     setProducts(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("storage"));
     } catch (e) {
       console.error("save products failed", e);
     }

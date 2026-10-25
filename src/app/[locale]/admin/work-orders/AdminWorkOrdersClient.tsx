@@ -121,15 +121,14 @@ export function AdminWorkOrdersClient({ locale: _locale }: { locale: string }) {
       try {
         // 1. Work orders
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setWorkOrders(parsed);
-          } else {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDemoWorkOrders));
           }
         } else {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDemoWorkOrders));
+          setWorkOrders(initialDemoWorkOrders);
         }
 
         // 2. Customers
@@ -159,6 +158,7 @@ export function AdminWorkOrdersClient({ locale: _locale }: { locale: string }) {
     setWorkOrders(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("storage"));
     } catch {}
   };
 

@@ -95,15 +95,14 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
       try {
         // 1. Payments
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setPayments(parsed);
-          } else {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoPayments));
           }
         } else {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoPayments));
+          setPayments(defaultDemoPayments);
         }
 
         // 2. Invoices
@@ -153,6 +152,7 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
     setPayments(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("storage"));
     } catch (e) {
       console.error("save payments failed", e);
     }

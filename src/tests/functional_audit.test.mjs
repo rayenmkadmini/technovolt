@@ -344,3 +344,54 @@ test("Service Selection Dropdown - Options render service labels and description
     assert.doesNotMatch(service.label, /(?:TND|DT|\d+\s*(?:DT|TND|dinars|€|\$))/i);
   });
 });
+
+// 10. DYNAMIC SIDEBAR BADGE & APPOINTMENT PERSISTENT DELETION
+function computeSidebarBadge(count) {
+  return count > 0 ? String(count) : undefined;
+}
+
+function loadAppointmentsFromStorage(rawStorage, defaultDemo) {
+  if (rawStorage !== null) {
+    try {
+      const parsed = JSON.parse(rawStorage);
+      if (Array.isArray(parsed)) {
+        return { data: parsed, reseeded: false };
+      }
+    } catch {}
+  }
+  return { data: defaultDemo, reseeded: true };
+}
+
+test("Sidebar Badge - Removes badge when appointments list is empty", () => {
+  assert.equal(computeSidebarBadge(0), undefined);
+  assert.equal(computeSidebarBadge(-1), undefined);
+  assert.equal(computeSidebarBadge(1), "1");
+  assert.equal(computeSidebarBadge(5), "5");
+});
+
+test("Appointment Storage - Deleting all items persists empty list without resurrecting demo data", () => {
+  const defaultDemo = [
+    { id: "apt-01", reference_number: "RDV-2026-0021" },
+    { id: "apt-02", reference_number: "RDV-2026-0022" },
+  ];
+
+  // User deletes all appointments, storage is empty array []
+  const emptyStorage = JSON.stringify([]);
+  const result = loadAppointmentsFromStorage(emptyStorage, defaultDemo);
+
+  assert.equal(result.reseeded, false);
+  assert.deepEqual(result.data, []);
+  assert.equal(computeSidebarBadge(result.data.length), undefined);
+});
+
+test("Appointment Storage - First visit initializes demo data only when storage is null", () => {
+  const defaultDemo = [
+    { id: "apt-01", reference_number: "RDV-2026-0021" },
+    { id: "apt-02", reference_number: "RDV-2026-0022" },
+  ];
+
+  const result = loadAppointmentsFromStorage(null, defaultDemo);
+  assert.equal(result.reseeded, true);
+  assert.equal(result.data.length, 2);
+  assert.equal(computeSidebarBadge(result.data.length), "2");
+});

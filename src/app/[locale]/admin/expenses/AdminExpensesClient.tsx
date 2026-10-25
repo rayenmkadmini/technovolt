@@ -115,15 +115,14 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
       try {
         // 1. Expenses
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setExpenses(parsed);
-          } else {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoExpenses));
           }
         } else {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoExpenses));
+          setExpenses(defaultDemoExpenses);
         }
 
         // 2. Suppliers

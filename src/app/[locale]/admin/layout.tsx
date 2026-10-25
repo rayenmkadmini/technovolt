@@ -40,18 +40,36 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [customLogo, setCustomLogo] = useState("/logo.png");
+  const [appointmentsCount, setAppointmentsCount] = useState<number>(0);
+  const [leadsCount, setLeadsCount] = useState<number>(0);
 
   useEffect(() => {
-    const updateLogo = () => {
+    const updateState = () => {
       try {
         const stored = localStorage.getItem("technovolt_company_logo");
         if (stored) setCustomLogo(stored);
         else setCustomLogo("/logo.png");
+
+        const aptRaw = localStorage.getItem("technovolt_admin_appointments");
+        if (aptRaw !== null) {
+          const parsedApt = JSON.parse(aptRaw);
+          setAppointmentsCount(Array.isArray(parsedApt) ? parsedApt.length : 0);
+        } else {
+          setAppointmentsCount(0);
+        }
+
+        const leadsRaw = localStorage.getItem("technovolt_admin_leads");
+        if (leadsRaw !== null) {
+          const parsedLeads = JSON.parse(leadsRaw);
+          setLeadsCount(Array.isArray(parsedLeads) ? parsedLeads.length : 0);
+        } else {
+          setLeadsCount(0);
+        }
       } catch {}
     };
-    updateLogo();
-    window.addEventListener("storage", updateLogo);
-    return () => window.removeEventListener("storage", updateLogo);
+    updateState();
+    window.addEventListener("storage", updateState);
+    return () => window.removeEventListener("storage", updateState);
   }, []);
 
   const isLoginPage = pathname.includes("/admin/login");
@@ -106,9 +124,9 @@ export default function AdminLayout({
       title: "Pilotage & CRM",
       items: [
         { href: "/admin", label: "Tableau de Bord", icon: LayoutDashboard },
-        { href: "/admin/leads", label: "Demandes & Devis", icon: Inbox, badge: "2" },
+        { href: "/admin/leads", label: "Demandes & Devis", icon: Inbox, badge: leadsCount > 0 ? String(leadsCount) : undefined },
         { href: "/admin/customers", label: "Fichier Clients", icon: Users },
-        { href: "/admin/appointments", label: "Rendez-vous", icon: Calendar, badge: "2" },
+        { href: "/admin/appointments", label: "Rendez-vous", icon: Calendar, badge: appointmentsCount > 0 ? String(appointmentsCount) : undefined },
         { href: "/admin/work-orders", label: "Chantiers & Travaux", icon: Wrench },
       ],
     },

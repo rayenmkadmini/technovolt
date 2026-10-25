@@ -126,9 +126,9 @@ export function AdminServicesClient({ initialServices }: Props) {
           }
         }
         const saved = localStorage.getItem(SERVICES_STORAGE);
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setServices(parsed);
             return;
           }

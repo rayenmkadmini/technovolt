@@ -92,9 +92,8 @@ interface Props {
 }
 
 export function AdminAppointmentsClient({ initialAppointments }: Props) {
-  const [appointments, setAppointments] = useState<AppointmentItem[]>(
-    initialAppointments.length > 0 ? initialAppointments : defaultDemoAppointments
-  );
+  const [appointments, setAppointments] = useState<AppointmentItem[]>(initialAppointments);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string; address?: string }[]>(
     defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone, address: c.notes }))
   );
@@ -121,15 +120,15 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
       try {
         // 1. Appointments
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
+        if (saved !== null) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setAppointments(parsed);
-          } else {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoAppointments));
           }
         } else {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDemoAppointments));
+          setAppointments(defaultDemoAppointments);
+          window.dispatchEvent(new Event("storage"));
         }
 
         // 2. Customers
@@ -156,7 +155,11 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
             if (titles.length > 0) setAvailableServices(titles);
           }
         }
-      } catch {}
+      } catch (e) {
+        console.error("Error loading appointments:", e);
+      } finally {
+        setIsLoaded(true);
+      }
     }, 0);
     return () => clearTimeout(timer);
   }, []);
@@ -170,6 +173,7 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
     setAppointments(next);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("storage"));
     } catch (e) {
       console.error("save appointments failed", e);
     }
@@ -241,9 +245,10 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
   };
 
   const handleDelete = (id: string) => {
-    save(appointments.filter((a) => a.id !== id));
+    const updated = appointments.filter((a) => a.id !== id);
+    save(updated);
     setDeleteConfirmId(null);
-    showToast("Rendez-vous supprimé.");
+    showToast("Rendez-vous supprimé avec succès.");
   };
 
   const filteredAppointments = appointments.filter((apt) => {
@@ -369,20 +374,28 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
               </div>
             )}
 
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">Réf: {apt.reference_number}</span>
               <button
-                onClick={() => setDeleteConfirmId(apt.id)}
-                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
-                title="Supprimer"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteConfirmId(apt.id);
+                }}
+                className="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors flex items-center gap-1 text-xs"
+                title="Supprimer ce rendez-vous"
               >
                 <Trash2 className="h-4 w-4" />
+                <span>Supprimer</span>
               </button>
             </div>
           </div>
         ))}
-        {filteredAppointments.length === 0 && (
+        {!isLoaded ? (
+          <div className="col-span-full text-center py-12 text-slate-400 text-xs">Chargement du planning...</div>
+        ) : filteredAppointments.length === 0 ? (
           <div className="col-span-full text-center py-12 text-slate-400 text-xs">Aucun rendez-vous trouvé.</div>
-        )}
+        ) : null}
       </div>
 
       {/* Modal Nouveau Rendez-vous */}
@@ -565,10 +578,11 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
               <p className="text-xs text-slate-500 mt-1">Cette action supprimera le rendez-vous du planning.</p>
             </div>
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">
+              <Button type="button" variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} className="text-xs">
                 Annuler
               </Button>
               <Button
+                type="button"
                 variant="destructive"
                 size="sm"
                 onClick={() => handleDelete(deleteConfirmId)}
