@@ -395,3 +395,115 @@ test("Appointment Storage - First visit initializes demo data only when storage 
   assert.equal(result.data.length, 2);
   assert.equal(computeSidebarBadge(result.data.length), "2");
 });
+
+// 11. PAYMENT DELETION RESTORES INVOICE BALANCE DUE & STATUS
+function revertPaymentFromInvoice(invoice, paymentAmount) {
+  const currentPaid = Number(invoice.amount_paid || 0);
+  const total = Number(invoice.total || 0);
+  const newPaid = Math.max(0, Math.round((currentPaid - paymentAmount) * 1000) / 1000);
+  const newBalance = Math.min(total, Math.round((total - newPaid) * 1000) / 1000);
+
+  let status = "unpaid";
+  if (newPaid >= total) {
+    status = "paid";
+  } else if (newPaid > 0) {
+    status = "partially_paid";
+  }
+
+  return {
+    ...invoice,
+    amount_paid: newPaid,
+    balance_due: newBalance,
+    status,
+  };
+}
+
+test("Financial Integrity - Payment deletion restores invoice balance due and sets partially_paid", () => {
+  const fullyPaidInvoice = {
+    id: "inv-001",
+    total: 1000.0,
+    amount_paid: 1000.0,
+    balance_due: 0.0,
+    status: "paid",
+  };
+
+  const afterDeletingPartial = revertPaymentFromInvoice(fullyPaidInvoice, 400.0);
+  assert.equal(afterDeletingPartial.amount_paid, 600.0);
+  assert.equal(afterDeletingPartial.balance_due, 400.0);
+  assert.equal(afterDeletingPartial.status, "partially_paid");
+});
+
+test("Financial Integrity - Deleting all payments restores full balance due and sets unpaid", () => {
+  const invoice = {
+    id: "inv-002",
+    total: 750.0,
+    amount_paid: 750.0,
+    balance_due: 0.0,
+    status: "paid",
+  };
+
+  const afterDeletingAll = revertPaymentFromInvoice(invoice, 750.0);
+  assert.equal(afterDeletingAll.amount_paid, 0.0);
+  assert.equal(afterDeletingAll.balance_due, 750.0);
+  assert.equal(afterDeletingAll.status, "unpaid");
+});
+
+// 12. CUSTOMER DELETION SAFETY CONSTRAINT (FK PROTECTION)
+function validateCustomerDeletion(customer, linkedInvoices = []) {
+  if (linkedInvoices.length > 0) {
+    return {
+      canDelete: false,
+      error: `Impossible de supprimer ce client : il possède ${linkedInvoices.length} facture(s) associée(s). Archivez ou supprimez d'abord les factures associées.`,
+    };
+  }
+  return { canDelete: true, error: null };
+}
+
+test("Customer Deletion - Blocks deletion when linked invoices exist", () => {
+  const customer = { id: "cust-01", full_name: "Société Sud Électricité" };
+  const linkedInvoices = [{ id: "inv-01", reference_number: "FAC-2026-001" }];
+
+  const result = validateCustomerDeletion(customer, linkedInvoices);
+  assert.equal(result.canDelete, false);
+  assert.ok(result.error.includes("possède 1 facture(s) associée(s)"));
+});
+
+test("Customer Deletion - Allows deletion when no invoices are attached", () => {
+  const customer = { id: "cust-02", full_name: "Client Sans Facture" };
+  const result = validateCustomerDeletion(customer, []);
+  assert.equal(result.canDelete, true);
+  assert.equal(result.error, null);
+});
+
+// 13. OPTIMISTIC ENTITY DELETION & ZERO ZOMBIE RE-SEEDING
+function computeActiveEntities(initialList, addedList, deletedIds) {
+  const combined = [...addedList, ...initialList];
+  return combined.filter(
+    (item) => !deletedIds.includes(item.id) && (!item.reference || !deletedIds.includes(item.reference))
+  );
+}
+
+test("Entity Deletion - Deleting all items results in empty list without re-seeding demo data", () => {
+  const initialProducts = [
+    { id: "prod-01", reference: "DISJ-16A", name: "Disjoncteur 16A" },
+    { id: "prod-02", reference: "DIFF-30MA", name: "Différentiel 30mA" },
+  ];
+  const deletedIds = ["prod-01", "prod-02"];
+  const active = computeActiveEntities(initialProducts, [], deletedIds);
+
+  assert.equal(active.length, 0);
+  assert.deepEqual(active, []);
+});
+
+test("Entity Deletion - Supports deletion by UUID or reference number", () => {
+  const initialWorkOrders = [
+    { id: "550e8400-e29b-41d4-a716-446655440000", reference: "OT-2026-0010" },
+    { id: "wo-02", reference: "OT-2026-0011" },
+  ];
+
+  // Delete first by UUID, second by reference number
+  const deletedIds = ["550e8400-e29b-41d4-a716-446655440000", "OT-2026-0011"];
+  const active = computeActiveEntities(initialWorkOrders, [], deletedIds);
+
+  assert.equal(active.length, 0);
+});

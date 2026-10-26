@@ -15,6 +15,8 @@ export default async function AdminPaymentsPage({
   setRequestLocale(locale);
 
   let initialPayments: PaymentItem[] = [];
+  let customersList: { name: string; phone: string }[] = [];
+  let invoicesList: any[] = [];
 
   try {
     const supabase = createAdminClient();
@@ -22,6 +24,27 @@ export default async function AdminPaymentsPage({
       .from("payments")
       .select("*, customers(full_name)")
       .order("payment_date", { ascending: false });
+
+    const { data: custData } = await supabase
+      .from("customers")
+      .select("full_name, phone")
+      .order("full_name", { ascending: true });
+
+    if (custData && custData.length > 0) {
+      customersList = custData.map((c: any) => ({
+        name: c.full_name,
+        phone: c.phone || "",
+      }));
+    }
+
+    const { data: invData } = await supabase
+      .from("invoices")
+      .select("id, invoice_number, total, amount_paid, balance_due, status")
+      .order("issue_date", { ascending: false });
+
+    if (invData && invData.length > 0) {
+      invoicesList = invData;
+    }
 
     if (data && data.length > 0) {
       initialPayments = data.map((pay: any) => ({
@@ -44,7 +67,11 @@ export default async function AdminPaymentsPage({
 
   return (
     <Suspense fallback={<div className="p-8 text-center text-slate-500">Chargement des règlements...</div>}>
-      <AdminPaymentsClient initialPayments={initialPayments} />
+      <AdminPaymentsClient
+        initialPayments={initialPayments}
+        customersList={customersList}
+        invoicesList={invoicesList}
+      />
     </Suspense>
   );
 }

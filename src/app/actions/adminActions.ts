@@ -43,10 +43,62 @@ export async function createCustomerAction(data: {
 export async function deleteCustomerAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("customers").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let customerUuid: string | null = null;
+    if (isUuid) {
+      customerUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("customers")
+        .select("id")
+        .or(`reference.eq.${id},reference_number.eq.${id}`)
+        .maybeSingle();
+      if (matched?.id) {
+        customerUuid = matched.id;
+      }
+    }
+
+    if (customerUuid) {
+      // Check for dependent invoices or quotations
+      const { data: linkedInvoices } = await supabase
+        .from("invoices")
+        .select("id, invoice_number")
+        .eq("customer_id", customerUuid)
+        .limit(1);
+
+      if (linkedInvoices && linkedInvoices.length > 0) {
+        return {
+          success: false,
+          error: `Impossible de supprimer ce client car la facture ${linkedInvoices[0].invoice_number} lui est rattachée.`,
+        };
+      }
+
+      const { data: linkedQuotes } = await supabase
+        .from("quotations")
+        .select("id, quotation_number")
+        .eq("customer_id", customerUuid)
+        .limit(1);
+
+      if (linkedQuotes && linkedQuotes.length > 0) {
+        return {
+          success: false,
+          error: `Impossible de supprimer ce client car le devis ${linkedQuotes[0].quotation_number} lui est rattaché.`,
+        };
+      }
+
+      // Clean appointments, work orders, and payments
+      await supabase.from("appointments").delete().eq("customer_id", customerUuid);
+      await supabase.from("work_orders").delete().eq("customer_id", customerUuid);
+      await supabase.from("payments").delete().eq("customer_id", customerUuid);
+
+      const { error } = await supabase.from("customers").delete().eq("id", customerUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/customers", "page");
     revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteCustomerAction error:", err);
@@ -124,10 +176,30 @@ export async function createAppointmentAction(data: {
 export async function deleteAppointmentAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("appointments").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let aptUuid: string | null = null;
+    if (isUuid) {
+      aptUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("reference_number", id)
+        .maybeSingle();
+      if (matched?.id) {
+        aptUuid = matched.id;
+      }
+    }
+
+    if (aptUuid) {
+      const { error } = await supabase.from("appointments").delete().eq("id", aptUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/appointments", "page");
     revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteAppointmentAction error:", err);
@@ -206,10 +278,31 @@ export async function createWorkOrderAction(data: {
 export async function deleteWorkOrderAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("work_orders").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let woUuid: string | null = null;
+    if (isUuid) {
+      woUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("work_orders")
+        .select("id")
+        .eq("job_number", id)
+        .maybeSingle();
+      if (matched?.id) {
+        woUuid = matched.id;
+      }
+    }
+
+    if (woUuid) {
+      await supabase.from("invoices").update({ work_order_id: null }).eq("work_order_id", woUuid);
+      const { error } = await supabase.from("work_orders").delete().eq("id", woUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/work-orders", "page");
     revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteWorkOrderAction error:", err);
@@ -255,8 +348,10 @@ export async function createPaymentAction(data: {
         payment_date: data.payment_date,
         payment_method: data.payment_method.toLowerCase().includes("virement")
           ? "bank_transfer"
-          : data.payment_method.toLowerCase().includes("chèque")
-          ? "check"
+          : data.payment_method.toLowerCase().includes("carte") || data.payment_method.toLowerCase().includes("card")
+          ? "card"
+          : data.payment_method.toLowerCase().includes("chèque") || data.payment_method.toLowerCase().includes("traite")
+          ? "other"
           : "cash",
         receipt_reference: data.receipt_reference || null,
         notes: data.notes || (data.invoice_number ? `Facture ${data.invoice_number}` : null),
@@ -288,6 +383,13 @@ export async function createPaymentAction(data: {
             status: newStatus,
           })
           .eq("id", inv.id);
+
+        // Record payment allocation
+        await supabase.from("payment_allocations").insert({
+          payment_id: inserted.id,
+          invoice_id: inv.id,
+          amount: data.amount,
+        });
       }
     }
 
@@ -304,10 +406,90 @@ export async function createPaymentAction(data: {
 export async function deletePaymentAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("payments").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let payUuid: string | null = null;
+    let paymentData: any = null;
+
+    if (isUuid) {
+      payUuid = id;
+      const { data } = await supabase.from("payments").select("*").eq("id", id).maybeSingle();
+      paymentData = data;
+    } else {
+      const { data: matched } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("payment_reference", id)
+        .maybeSingle();
+      if (matched) {
+        payUuid = matched.id;
+        paymentData = matched;
+      }
+    }
+
+    if (payUuid && paymentData) {
+      // 1. Restore invoice balance if linked
+      let invoiceNumber: string | null = null;
+      if (paymentData.notes && paymentData.notes.startsWith("Facture ")) {
+        invoiceNumber = paymentData.notes.replace("Facture ", "").trim();
+      }
+
+      // Check payment allocations
+      const { data: allocations } = await supabase
+        .from("payment_allocations")
+        .select("invoice_id, amount")
+        .eq("payment_id", payUuid);
+
+      if (allocations && allocations.length > 0) {
+        for (const alloc of allocations) {
+          const { data: inv } = await supabase
+            .from("invoices")
+            .select("id, amount_paid, total")
+            .eq("id", alloc.invoice_id)
+            .maybeSingle();
+
+          if (inv) {
+            const newPaid = Math.max(0, (Number(inv.amount_paid) || 0) - Number(alloc.amount));
+            const total = Number(inv.total) || 0;
+            const newBalance = Math.max(0, total - newPaid);
+            const newStatus = newBalance === 0 ? "paid" : newPaid > 0 ? "partially_paid" : "issued";
+
+            await supabase
+              .from("invoices")
+              .update({ amount_paid: newPaid, balance_due: newBalance, status: newStatus })
+              .eq("id", inv.id);
+          }
+        }
+      } else if (invoiceNumber) {
+        const { data: inv } = await supabase
+          .from("invoices")
+          .select("id, amount_paid, total")
+          .eq("invoice_number", invoiceNumber)
+          .maybeSingle();
+
+        if (inv) {
+          const newPaid = Math.max(0, (Number(inv.amount_paid) || 0) - Number(paymentData.amount));
+          const total = Number(inv.total) || 0;
+          const newBalance = Math.max(0, total - newPaid);
+          const newStatus = newBalance === 0 ? "paid" : newPaid > 0 ? "partially_paid" : "issued";
+
+          await supabase
+            .from("invoices")
+            .update({ amount_paid: newPaid, balance_due: newBalance, status: newStatus })
+            .eq("id", inv.id);
+        }
+      }
+
+      // 2. Delete payment (cascades allocations)
+      await supabase.from("payment_allocations").delete().eq("payment_id", payUuid);
+      const { error } = await supabase.from("payments").delete().eq("id", payUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/payments", "page");
+    revalidatePath("/[locale]/admin/invoices", "page");
     revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deletePaymentAction error:", err);
@@ -372,10 +554,30 @@ export async function createExpenseAction(data: {
 export async function deleteExpenseAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("expenses").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let expUuid: string | null = null;
+    if (isUuid) {
+      expUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("expenses")
+        .select("id")
+        .eq("reference", id)
+        .maybeSingle();
+      if (matched?.id) {
+        expUuid = matched.id;
+      }
+    }
+
+    if (expUuid) {
+      const { error } = await supabase.from("expenses").delete().eq("id", expUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/expenses", "page");
     revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteExpenseAction error:", err);
@@ -425,9 +627,30 @@ export async function createProductAction(data: {
 export async function deleteProductAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let prodUuid: string | null = null;
+    if (isUuid) {
+      prodUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("products")
+        .select("id")
+        .eq("sku", id)
+        .maybeSingle();
+      if (matched?.id) {
+        prodUuid = matched.id;
+      }
+    }
+
+    if (prodUuid) {
+      await supabase.from("invoice_items").update({ product_id: null }).eq("product_id", prodUuid);
+      const { error } = await supabase.from("products").delete().eq("id", prodUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/inventory", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteProductAction error:", err);
@@ -473,9 +696,31 @@ export async function createSupplierAction(data: {
 export async function deleteSupplierAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("suppliers").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let supUuid: string | null = null;
+    if (isUuid) {
+      supUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("suppliers")
+        .select("id")
+        .ilike("name", id)
+        .maybeSingle();
+      if (matched?.id) {
+        supUuid = matched.id;
+      }
+    }
+
+    if (supUuid) {
+      await supabase.from("expenses").update({ supplier_id: null }).eq("supplier_id", supUuid);
+      const { error } = await supabase.from("suppliers").delete().eq("id", supUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/suppliers", "page");
+    revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteSupplierAction error:", err);
@@ -555,11 +800,24 @@ export async function createServiceAction(data: {
 export async function deleteServiceAction(id: string) {
   try {
     const supabase = createAdminClient();
-    await supabase.from("service_translations").delete().eq("service_id", id);
-    const { error } = await supabase.from("services").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let srvUuid: string | null = null;
+    if (isUuid) {
+      srvUuid = id;
+    } else {
+      const { data: matched } = await supabase.from("services").select("id").eq("slug", id).maybeSingle();
+      if (matched?.id) srvUuid = matched.id;
+    }
+
+    if (srvUuid) {
+      await supabase.from("service_translations").delete().eq("service_id", srvUuid);
+      const { error } = await supabase.from("services").delete().eq("id", srvUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/services", "page");
     revalidatePath("/[locale]/services", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteServiceAction error:", err);
@@ -957,5 +1215,71 @@ export async function updateCompanySettingsAction(settings: Record<string, any>)
   } catch (err: any) {
     console.error("updateCompanySettingsAction error:", err);
     return { success: false, error: err.message || "Failed to update company settings" };
+  }
+}
+
+// --- MEDIA UPLOAD ---
+export async function uploadMediaAction(formData: FormData) {
+  try {
+    const file = formData.get("file") as File;
+    const folder = (formData.get("folder") as string) || "Chantiers";
+    const altFr = (formData.get("altFr") as string) || "";
+
+    if (!file) {
+      return { success: false, error: "Aucun fichier fourni." };
+    }
+
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+    if (!validTypes.includes(file.type)) {
+      return { success: false, error: "Type de fichier non supporté. Utilisez PNG, JPG, WebP ou SVG." };
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      return { success: false, error: "Le fichier dépasse la taille maximale autorisée de 5 Mo." };
+    }
+
+    const supabase = createAdminClient();
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const safeName = `${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}.${ext}`;
+    const filePath = `${folder.toLowerCase()}/${safeName}`;
+
+    let publicUrl = `/images/projects/${safeName}`;
+
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const bucketName = "media";
+      const { data: uploadData, error: uploadErr } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, buffer, {
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (!uploadErr && uploadData) {
+        const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+        if (urlData?.publicUrl) {
+          publicUrl = urlData.publicUrl;
+        }
+      }
+    } catch (storageErr) {
+      console.warn("Supabase storage upload fallback:", storageErr);
+    }
+
+    return {
+      success: true,
+      data: {
+        id: `med-${Date.now()}`,
+        name: file.name,
+        url: publicUrl,
+        size: Math.round(file.size / 1024) + " KB",
+        folder,
+        altTextFr: altFr || file.name,
+        altTextAr: "",
+        uploadedAt: new Date().toISOString().slice(0, 10),
+      },
+    };
+  } catch (err: any) {
+    console.error("uploadMediaAction error:", err);
+    return { success: false, error: err.message || "Erreur lors du téléversement du média" };
   }
 }

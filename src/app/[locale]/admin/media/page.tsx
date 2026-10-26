@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { uploadMediaAction } from "@/app/actions/adminActions";
 import {
   Image as ImageIcon,
   Upload,
@@ -76,6 +77,8 @@ export default function AdminMediaPage() {
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [formName, setFormName] = useState("");
   const [formUrl, setFormUrl] = useState("");
   const [formPreview, setFormPreview] = useState<string | null>(null);
@@ -145,21 +148,28 @@ export default function AdminMediaPage() {
 
     const kbSize = Math.round(file.size / 1024) + " KB";
     setFormSize(kbSize);
+    setSelectedFile(file);
     if (!formName) {
       setFormName(file.name);
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (typeof e.target?.result === "string") {
-        setFormPreview(e.target.result);
-        setFormUrl(e.target.result);
-      }
-    };
-    reader.onerror = () => {
-      setErrorMsg("Erreur lors de la lecture du fichier.");
-    };
-    reader.readAsDataURL(file);
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      setFormPreview(previewUrl);
+      setFormUrl(previewUrl);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (typeof e.target?.result === "string") {
+          setFormPreview(e.target.result);
+          setFormUrl(e.target.result);
+        }
+      };
+      reader.onerror = () => {
+        setErrorMsg("Erreur lors de la lecture du fichier.");
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -181,31 +191,58 @@ export default function AdminMediaPage() {
     }
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formUrl.trim()) {
+    if (!formName.trim() || (!selectedFile && !formUrl.trim())) {
       setErrorMsg("Veuillez sélectionner un fichier ou indiquer une URL.");
       return;
     }
-    const newItem: MediaItem = {
-      id: `med-${Date.now()}`,
-      name: formName.trim(),
-      url: formUrl.trim(),
-      size: formSize,
-      folder: formFolder,
-      altTextFr: formAltFr.trim() || formName.trim(),
-      altTextAr: "",
-      uploadedAt: new Date().toISOString().slice(0, 10),
-    };
-    saveMediaList([newItem, ...mediaList]);
-    setToastMessage("Fichier ajouté avec succès !");
-    setTimeout(() => setToastMessage(null), 3500);
-    setIsModalOpen(false);
-    setFormName("");
-    setFormUrl("");
-    setFormPreview(null);
-    setFormAltFr("");
+
+    setIsUploading(true);
     setErrorMsg(null);
+
+    try {
+      let newItem: MediaItem;
+
+      if (selectedFile) {
+        const fd = new FormData();
+        fd.append("file", selectedFile);
+        fd.append("folder", formFolder);
+        fd.append("altFr", formAltFr.trim() || formName.trim());
+
+        const res = await uploadMediaAction(fd);
+        if (!res.success || !res.data) {
+          throw new Error(res.error || "Erreur lors du téléversement du média.");
+        }
+        newItem = res.data;
+      } else {
+        newItem = {
+          id: `med-${Date.now()}`,
+          name: formName.trim(),
+          url: formUrl.trim(),
+          size: formSize,
+          folder: formFolder,
+          altTextFr: formAltFr.trim() || formName.trim(),
+          altTextAr: "",
+          uploadedAt: new Date().toISOString().slice(0, 10),
+        };
+      }
+
+      saveMediaList([newItem, ...mediaList]);
+      setToastMessage("Fichier ajouté avec succès !");
+      setTimeout(() => setToastMessage(null), 3500);
+      setIsModalOpen(false);
+      setSelectedFile(null);
+      setFormName("");
+      setFormUrl("");
+      setFormPreview(null);
+      setFormAltFr("");
+      setErrorMsg(null);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Erreur lors du téléversement.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -440,6 +477,7 @@ export default function AdminMediaPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
+                        setSelectedFile(null);
                         setFormPreview(null);
                         setFormUrl("");
                         setFormSize("-");
@@ -501,9 +539,10 @@ export default function AdminMediaPage() {
                 <Button
                   type="submit"
                   variant="default"
+                  disabled={isUploading}
                   className="text-xs font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
                 >
-                  Enregistrer l'image
+                  {isUploading ? "Téléversement..." : "Enregistrer l'image"}
                 </Button>
               </div>
             </form>

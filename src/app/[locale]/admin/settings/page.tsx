@@ -5,7 +5,7 @@ import Image from "next/image";
 import { defaultCompanySettings } from "@/lib/data/initialData";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { updateCompanySettingsAction } from "@/app/actions/adminActions";
+import { updateCompanySettingsAction, uploadMediaAction } from "@/app/actions/adminActions";
 import {
   Settings,
   Save,
@@ -22,9 +22,11 @@ export default function AdminSettingsPage() {
 
   // Logo management state
   const [logoUrl, setLogoUrl] = useState("/logo.png");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
   const [logoSaved, setLogoSaved] = useState(false);
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,16 +97,21 @@ export default function AdminSettingsPage() {
       setLogoError("Le fichier est trop volumineux. La taille maximale autorisée est de 5 Mo.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (typeof ev.target?.result === "string") {
-        setLogoPreview(ev.target.result);
-      }
-    };
-    reader.onerror = () => {
-      setLogoError("Échec de la lecture du fichier image.");
-    };
-    reader.readAsDataURL(file);
+    setLogoFile(file);
+    try {
+      setLogoPreview(URL.createObjectURL(file));
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (typeof ev.target?.result === "string") {
+          setLogoPreview(ev.target.result);
+        }
+      };
+      reader.onerror = () => {
+        setLogoError("Échec de la lecture du fichier image.");
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,24 +143,47 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleSaveLogo = () => {
+  const handleSaveLogo = async () => {
     if (!logoPreview) return;
+    setIsSavingLogo(true);
+    setLogoError(null);
+
+    let finalLogoUrl = logoPreview;
+
     try {
-      localStorage.setItem("technovolt_company_logo", logoPreview);
-      setLogoUrl(logoPreview);
+      if (logoFile) {
+        const fd = new FormData();
+        fd.append("file", logoFile);
+        fd.append("folder", "Branding");
+        fd.append("altFr", "Logo TECHNOVOLT");
+        const res = await uploadMediaAction(fd);
+        if (res.success && res.data?.url) {
+          finalLogoUrl = res.data.url;
+        }
+      }
+
+      await updateCompanySettingsAction({ logo_url: finalLogoUrl });
+      localStorage.setItem("technovolt_company_logo", finalLogoUrl);
+      setLogoUrl(finalLogoUrl);
+      setLogoFile(null);
       setLogoPreview(null);
       setLogoSaved(true);
       window.dispatchEvent(new Event("storage"));
       setTimeout(() => setLogoSaved(false), 3000);
-    } catch {
-      setLogoError("Erreur lors de l'enregistrement du logo.");
+    } catch (err: any) {
+      console.error("Save logo error:", err);
+      setLogoError(err.message || "Erreur lors de l'enregistrement du logo.");
+    } finally {
+      setIsSavingLogo(false);
     }
   };
 
-  const handleResetLogo = () => {
+  const handleResetLogo = async () => {
     try {
+      await updateCompanySettingsAction({ logo_url: "/logo.png" });
       localStorage.removeItem("technovolt_company_logo");
       setLogoUrl("/logo.png");
+      setLogoFile(null);
       setLogoPreview(null);
       setLogoSaved(true);
       window.dispatchEvent(new Event("storage"));
@@ -368,10 +398,11 @@ export default function AdminSettingsPage() {
                     type="button"
                     variant="default"
                     size="sm"
+                    disabled={isSavingLogo}
                     onClick={handleSaveLogo}
                     className="text-xs h-8 font-bold bg-[#0B69FF] hover:bg-[#094FC9]"
                   >
-                    Enregistrer le logo
+                    {isSavingLogo ? "Enregistrement..." : "Enregistrer le logo"}
                   </Button>
                 </div>
               </div>

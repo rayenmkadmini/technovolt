@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
-import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
 import { createWorkOrderAction, deleteWorkOrderAction } from "@/app/actions/adminActions";
 import {
   Wrench,
@@ -37,41 +37,6 @@ export interface WorkOrderItem {
 
 const STORAGE_KEY = "technovolt_admin_work_orders";
 
-const initialDemoWorkOrders: WorkOrderItem[] = [
-  {
-    id: "wo-01",
-    job_number: "OT-2026-0012",
-    customer_name: "Société Sud Équipement",
-    customer_phone: "+216 75 760 111",
-    service_title: "Installation Tableau Électrique & TGBT",
-    description: "Installation armoire générale de distribution et câblage atelier",
-    status: "in_progress",
-    start_date: "2026-10-20",
-    completion_date: "2026-10-28",
-    labor_hours: 18,
-    total_cost: 1450.0,
-    technician_name: "Tarak B.",
-    notes: "Fourniture disjoncteurs différentiels 40A et câbles 10mm² inclus",
-    created_at: "2026-10-20T08:00:00Z",
-  },
-  {
-    id: "wo-02",
-    job_number: "OT-2026-0011",
-    customer_name: "M. Hichem Ben Amor",
-    customer_phone: "+216 98 443 210",
-    service_title: "Mise à la terre & Contrôle de Conformité STEG",
-    description: "Raccordement tableau villa R+1 et mise à la terre",
-    status: "completed",
-    start_date: "2026-10-15",
-    completion_date: "2026-10-17",
-    labor_hours: 12,
-    total_cost: 680.0,
-    technician_name: "Kais M.",
-    notes: "Mesure de terre validée à 4.2 Ohms (conforme STEG)",
-    created_at: "2026-10-15T09:30:00Z",
-  },
-];
-
 const fallbackServicesList = [
   "Installation Tableau Électrique & TGBT",
   "Dépannage & Recherche de Panne 24/7",
@@ -88,19 +53,28 @@ const techniciansList = [
   "Équipe Technique Chantier",
 ];
 
+function generateWorkOrderId(): string {
+  return `wo-${Date.now()}`;
+}
+
+function generateNextJobNumber(): string {
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  return `OT-${new Date().getFullYear()}-${randomSuffix}`;
+}
+
 export function AdminWorkOrdersClient({
   locale,
   initialWorkOrders = [],
+  customersList = [],
 }: {
   locale: string;
   initialWorkOrders?: WorkOrderItem[];
+  customersList?: { name: string; phone: string }[];
 }) {
-  const [workOrders, setWorkOrders] = useState<WorkOrderItem[]>(
-    initialWorkOrders.length > 0 ? initialWorkOrders : initialDemoWorkOrders
-  );
-  const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string }[]>(
-    defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone }))
-  );
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedWorkOrders, setAddedWorkOrders] = useState<WorkOrderItem[]>([]);
+  const availableCustomers = customersList;
   const [availableServices, setAvailableServices] = useState<string[]>(fallbackServicesList);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,6 +84,11 @@ export function AdminWorkOrdersClient({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const baseList = [...addedWorkOrders, ...initialWorkOrders];
+  const workOrders = baseList.filter(
+    (wo) => !deletedIds.includes(wo.id) && !deletedIds.includes(wo.job_number)
+  );
 
   // Form state
   const [formJobNumber, setFormJobNumber] = useState("");
@@ -128,25 +107,7 @@ export function AdminWorkOrdersClient({
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        // 1. Work orders
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialWorkOrders.length === 0) {
-            setWorkOrders(parsed);
-          }
-        }
-
-        // 2. Customers
-        const custRaw = localStorage.getItem("technovolt_admin_customers");
-        if (custRaw) {
-          const parsedCust = JSON.parse(custRaw);
-          if (Array.isArray(parsedCust) && parsedCust.length > 0) {
-            setAvailableCustomers(parsedCust.map((c: any) => ({ name: c.full_name, phone: c.phone || "" })));
-          }
-        }
-
-        // 3. Services
+        // Services from localStorage if custom types were added
         const srvRaw = localStorage.getItem("technovolt_admin_services");
         if (srvRaw) {
           const parsedSrv = JSON.parse(srvRaw);
@@ -158,15 +119,7 @@ export function AdminWorkOrdersClient({
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, [initialWorkOrders]);
-
-  const saveWorkOrders = (next: WorkOrderItem[]) => {
-    setWorkOrders(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch {}
-  };
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -174,8 +127,7 @@ export function AdminWorkOrdersClient({
   };
 
   const openNewOrderModal = () => {
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    setFormJobNumber(`OT-${new Date().getFullYear()}-${randomSuffix}`);
+    setFormJobNumber(generateNextJobNumber());
     setFormError(null);
     setIsModalOpen(true);
   };
@@ -230,7 +182,7 @@ export function AdminWorkOrdersClient({
     }
 
     setIsSubmitting(true);
-    let createdId = `wo-${Date.now()}`;
+    let createdId = generateWorkOrderId();
     try {
       const res = await createWorkOrderAction({
         job_number: formJobNumber || undefined,
@@ -247,6 +199,7 @@ export function AdminWorkOrdersClient({
       });
       if (res.success && res.data?.id) {
         createdId = res.data.id;
+        router.refresh();
       }
     } catch (err) {
       console.error("Failed to sync work order to database:", err);
@@ -269,7 +222,7 @@ export function AdminWorkOrdersClient({
       created_at: new Date().toISOString(),
     };
 
-    saveWorkOrders([newWorkOrder, ...workOrders]);
+    setAddedWorkOrders((prev) => [newWorkOrder, ...prev]);
     setIsSubmitting(false);
     showToast(`Ordre de travail ${newWorkOrder.job_number} créé avec succès !`);
     setIsModalOpen(false);
@@ -289,14 +242,31 @@ export function AdminWorkOrdersClient({
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteWorkOrderAction(id);
-    } catch (err) {
-      console.error("Failed to delete work order from database:", err);
-    }
-    saveWorkOrders(workOrders.filter((wo) => wo.id !== id));
+    // 1. Optimistic removal
+    setDeletedIds((prev) => [...prev, id]);
     setDeleteConfirmId(null);
     showToast("Ordre de travail supprimé.");
+
+    try {
+      const remaining = workOrders.filter((wo) => wo.id !== id && wo.job_number !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+
+    // 2. Database persistence
+    try {
+      const res = await deleteWorkOrderAction(id);
+      if (!res.success) {
+        showToast(res.error || "Erreur lors de la suppression.");
+        setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to delete work order from database:", err);
+      showToast("Erreur lors de la suppression.");
+      setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+    }
   };
 
   const filteredOrders = workOrders.filter((wo) => {

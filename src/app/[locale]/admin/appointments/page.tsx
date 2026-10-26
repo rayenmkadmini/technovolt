@@ -14,6 +14,7 @@ export default async function AdminAppointmentsPage({
   setRequestLocale(locale);
 
   let initialAppointments: AppointmentItem[] = [];
+  let customersList: { name: string; phone: string; address?: string }[] = [];
 
   try {
     const supabase = createAdminClient();
@@ -21,6 +22,19 @@ export default async function AdminAppointmentsPage({
       .from("appointments")
       .select("*, customers(full_name, phone)")
       .order("scheduled_date", { ascending: true });
+
+    const { data: custData } = await supabase
+      .from("customers")
+      .select("full_name, phone, notes")
+      .order("full_name", { ascending: true });
+
+    if (custData && custData.length > 0) {
+      customersList = custData.map((c: any) => ({
+        name: c.full_name,
+        phone: c.phone || "",
+        address: c.notes || "",
+      }));
+    }
 
     if (data && data.length > 0) {
       initialAppointments = data.map((apt: any) => ({
@@ -43,5 +57,5 @@ export default async function AdminAppointmentsPage({
     console.error("Failed to load appointments from Supabase:", err);
   }
 
-  return <AdminAppointmentsClient initialAppointments={initialAppointments} />;
+  return <AdminAppointmentsClient initialAppointments={initialAppointments} customersList={customersList} />;
 }

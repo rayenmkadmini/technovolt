@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
-import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
 import { createAppointmentAction, deleteAppointmentAction } from "@/app/actions/adminActions";
 import {
   Calendar,
@@ -57,15 +57,15 @@ const techniciansList = [
 
 interface Props {
   initialAppointments: AppointmentItem[];
+  customersList?: { name: string; phone: string; address?: string }[];
 }
 
-export function AdminAppointmentsClient({ initialAppointments }: Props) {
-  const [appointments, setAppointments] = useState<AppointmentItem[]>(initialAppointments);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string; address?: string }[]>(
-    defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone, address: c.notes }))
-  );
-  const [availableServices, setAvailableServices] = useState<string[]>(fallbackServicesList);
+export function AdminAppointmentsClient({ initialAppointments, customersList = [] }: Props) {
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedAppointments, setAddedAppointments] = useState<AppointmentItem[]>([]);
+  const availableCustomers = customersList;
+  const availableServices = fallbackServicesList;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,64 +83,14 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        // 1. Appointments
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialAppointments.length === 0) {
-            setAppointments(parsed);
-          }
-        }
-
-        // 2. Customers
-        const custRaw = localStorage.getItem("technovolt_admin_customers");
-        if (custRaw) {
-          const parsedCust = JSON.parse(custRaw);
-          if (Array.isArray(parsedCust) && parsedCust.length > 0) {
-            setAvailableCustomers(
-              parsedCust.map((c: any) => ({
-                name: c.full_name,
-                phone: c.phone || "",
-                address: c.notes || c.address || "",
-              }))
-            );
-          }
-        }
-
-        // 3. Services
-        const srvRaw = localStorage.getItem("technovolt_admin_services");
-        if (srvRaw) {
-          const parsedSrv = JSON.parse(srvRaw);
-          if (Array.isArray(parsedSrv) && parsedSrv.length > 0) {
-            const titles = parsedSrv.map((s: any) => s.title || s.name).filter(Boolean);
-            if (titles.length > 0) setAvailableServices(titles);
-          }
-        }
-      } catch (e) {
-        console.error("Error loading appointments:", e);
-      } finally {
-        setIsLoaded(true);
-      }
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialAppointments]);
+  const baseList = [...addedAppointments, ...initialAppointments];
+  const appointments = baseList.filter(
+    (a) => !deletedIds.includes(a.id) && !deletedIds.includes(a.reference_number)
+  );
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const save = (next: AppointmentItem[]) => {
-    setAppointments(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch (e) {
-      console.error("save appointments failed", e);
-    }
   };
 
   const handleCustomerSelect = (customerName: string) => {
@@ -192,6 +142,7 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
       if (res.success && res.data) {
         createdId = res.data.id;
         if (res.data.reference_number) createdRef = res.data.reference_number;
+        router.refresh();
       }
     } catch (err) {
       console.error("Failed to sync appointment to database:", err);
@@ -213,7 +164,7 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
       created_at: new Date().toISOString(),
     };
 
-    save([newApt, ...appointments]);
+    setAddedAppointments((prev) => [newApt, ...prev]);
     setIsSubmitting(false);
     showToast("Rendez-vous enregistré avec succès !");
     setIsModalOpen(false);
@@ -232,15 +183,31 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteAppointmentAction(id);
-    } catch (err) {
-      console.error("Failed to delete appointment from database:", err);
-    }
-    const updated = appointments.filter((a) => a.id !== id);
-    save(updated);
+    // 1. Optimistic removal
+    setDeletedIds((prev) => [...prev, id]);
     setDeleteConfirmId(null);
     showToast("Rendez-vous supprimé avec succès.");
+
+    try {
+      const remaining = appointments.filter((a) => a.id !== id && a.reference_number !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+
+    // 2. Database persistence
+    try {
+      const res = await deleteAppointmentAction(id);
+      if (!res.success) {
+        showToast(res.error || "Erreur lors de la suppression.");
+        setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to delete appointment from database:", err);
+      showToast("Erreur lors de la suppression.");
+      setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+    }
   };
 
   const filteredAppointments = appointments.filter((apt) => {
@@ -383,9 +350,7 @@ export function AdminAppointmentsClient({ initialAppointments }: Props) {
             </div>
           </div>
         ))}
-        {!isLoaded ? (
-          <div className="col-span-full text-center py-12 text-slate-400 text-xs">Chargement du planning...</div>
-        ) : filteredAppointments.length === 0 ? (
+        {filteredAppointments.length === 0 ? (
           <div className="col-span-full text-center py-12 text-slate-400 text-xs">Aucun rendez-vous trouvé.</div>
         ) : null}
       </div>

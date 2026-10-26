@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
-import { defaultDemoCustomers } from "../customers/AdminCustomersClient";
 import { createPaymentAction, deletePaymentAction } from "@/app/actions/adminActions";
 import {
   CreditCard,
@@ -34,48 +34,27 @@ export interface PaymentItem {
 
 const STORAGE_KEY = "technovolt_admin_payments";
 
-const defaultDemoPayments: PaymentItem[] = [
-  {
-    id: "pay-01",
-    payment_reference: "REG-2026-0038",
-    customer_name: "Société Sud Équipement",
-    invoice_number: "FAC-2026-0038",
-    amount: 900.0,
-    currency: "TND",
-    payment_date: "2026-10-21",
-    payment_method: "Virement",
-    receipt_reference: "VIR-BNA-88392",
-    notes: "Acompte de 900 TND reçu",
-    created_at: "2026-10-21T11:00:00Z",
-  },
-  {
-    id: "pay-02",
-    payment_reference: "REG-2026-0039",
-    customer_name: "Dr. Lassaad Marzouki",
-    invoice_number: "FAC-2026-0039",
-    amount: 450.0,
-    currency: "TND",
-    payment_date: "2026-10-19",
-    payment_method: "Espèces",
-    receipt_reference: "ESP-2026-19",
-    notes: "Règlement total au comptant",
-    created_at: "2026-10-19T16:00:00Z",
-  },
-];
+function generatePaymentId(): string {
+  return `pay-${Date.now()}`;
+}
+
+function generatePaymentRef(): string {
+  return `REG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
 
 interface Props {
   initialPayments: PaymentItem[];
+  customersList?: { name: string; phone: string }[];
+  invoicesList?: any[];
 }
 
-export function AdminPaymentsClient({ initialPayments }: Props) {
+export function AdminPaymentsClient({ initialPayments, customersList = [], invoicesList = [] }: Props) {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [payments, setPayments] = useState<PaymentItem[]>(
-    initialPayments.length > 0 ? initialPayments : defaultDemoPayments
-  );
-  const [availableInvoices, setAvailableInvoices] = useState<any[]>([]);
-  const [availableCustomers, setAvailableCustomers] = useState<{ name: string; phone: string }[]>(
-    defaultDemoCustomers.map((c) => ({ name: c.full_name, phone: c.phone }))
-  );
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedPayments, setAddedPayments] = useState<PaymentItem[]>([]);
+  const availableInvoices = invoicesList;
+  const availableCustomers = customersList;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,39 +70,10 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        // 1. Payments
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialPayments.length === 0) {
-            setPayments(parsed);
-          }
-        }
-
-        // 2. Invoices
-        const invStorage = localStorage.getItem("technovolt_admin_invoices");
-        if (invStorage) {
-          const parsedInv = JSON.parse(invStorage);
-          if (Array.isArray(parsedInv)) {
-            setAvailableInvoices(parsedInv);
-          }
-        }
-
-        // 3. Customers
-        const custRaw = localStorage.getItem("technovolt_admin_customers");
-        if (custRaw) {
-          const parsedCust = JSON.parse(custRaw);
-          if (Array.isArray(parsedCust) && parsedCust.length > 0) {
-            setAvailableCustomers(parsedCust.map((c: any) => ({ name: c.full_name, phone: c.phone || "" })));
-          }
-        }
-      } catch {}
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialPayments]);
+  const baseList = [...addedPayments, ...initialPayments];
+  const payments = baseList.filter(
+    (p) => !deletedIds.includes(p.id) && !deletedIds.includes(p.payment_reference)
+  );
 
   // Check URL query parameters for prefilling from invoice list
   useEffect(() => {
@@ -144,16 +94,6 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const save = (next: PaymentItem[]) => {
-    setPayments(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch (e) {
-      console.error("save payments failed", e);
-    }
   };
 
   const totalCollected = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -211,8 +151,8 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
     }
 
     setIsSubmitting(true);
-    let createdId = `pay-${Date.now()}`;
-    let createdRef = `REG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    let createdId = generatePaymentId();
+    let createdRef = generatePaymentRef();
 
     try {
       const res = await createPaymentAction({
@@ -234,6 +174,7 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
       if (res.success && res.data) {
         createdId = res.data.id;
         if (res.data.payment_reference) createdRef = res.data.payment_reference;
+        router.refresh();
       }
     } catch (err) {
       console.error("Failed to sync payment to database:", err);
@@ -260,7 +201,7 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
       created_at: new Date().toISOString(),
     };
 
-    save([newPay, ...payments]);
+    setAddedPayments((prev) => [newPay, ...prev]);
 
     // Synchronize corresponding invoice in localStorage if referenced
     if (formInvoice.trim()) {
@@ -308,14 +249,31 @@ export function AdminPaymentsClient({ initialPayments }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await deletePaymentAction(id);
-    } catch (err) {
-      console.error("Failed to delete payment from database:", err);
-    }
-    save(payments.filter((p) => p.id !== id));
+    // 1. Optimistic removal
+    setDeletedIds((prev) => [...prev, id]);
     setDeleteConfirmId(null);
     showToast("Règlement supprimé.");
+
+    try {
+      const remaining = payments.filter((p) => p.id !== id && p.payment_reference !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+
+    // 2. Database persistence
+    try {
+      const res = await deletePaymentAction(id);
+      if (!res.success) {
+        showToast(res.error || "Erreur lors de la suppression.");
+        setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to delete payment from database:", err);
+      showToast("Erreur lors de la suppression.");
+      setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+    }
   };
 
   const filteredPayments = payments.filter((pay) => {

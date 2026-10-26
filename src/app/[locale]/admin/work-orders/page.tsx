@@ -14,6 +14,7 @@ export default async function AdminWorkOrdersPage({
   setRequestLocale(locale);
 
   let initialWorkOrders: WorkOrderItem[] = [];
+  let customersList: { name: string; phone: string }[] = [];
 
   try {
     const supabase = createAdminClient();
@@ -21,6 +22,18 @@ export default async function AdminWorkOrdersPage({
       .from("work_orders")
       .select("*, customers(full_name, phone)")
       .order("created_at", { ascending: false });
+
+    const { data: custData } = await supabase
+      .from("customers")
+      .select("full_name, phone")
+      .order("full_name", { ascending: true });
+
+    if (custData && custData.length > 0) {
+      customersList = custData.map((c: any) => ({
+        name: c.full_name,
+        phone: c.phone || "",
+      }));
+    }
 
     if (data && data.length > 0) {
       initialWorkOrders = data.map((wo: any) => ({
@@ -44,5 +57,5 @@ export default async function AdminWorkOrdersPage({
     console.error("Failed to load work orders from Supabase:", err);
   }
 
-  return <AdminWorkOrdersClient locale={locale} initialWorkOrders={initialWorkOrders} />;
+  return <AdminWorkOrdersClient locale={locale} initialWorkOrders={initialWorkOrders} customersList={customersList} />;
 }

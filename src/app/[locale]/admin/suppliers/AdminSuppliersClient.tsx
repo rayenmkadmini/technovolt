@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
@@ -30,52 +31,18 @@ export interface SupplierItem {
   is_active: boolean;
 }
 
-const STORAGE_KEY = "technovolt_admin_suppliers";
-
-const defaultDemoSuppliers: SupplierItem[] = [
-  {
-    id: "supp-01",
-    name: "Comptoir Électrique du Sud",
-    contact_person: "M. Adel Mabrouk",
-    phone: "+216 75 760 300",
-    email: "commercial@comptoir-sud.tn",
-    address: "Route de Médenine Km 2, Tataouine",
-    notes: "Distributeur officiel Legrand, Hager, Schneider Electric",
-    outstanding_amount: 0,
-    is_active: true,
-  },
-  {
-    id: "supp-02",
-    name: "Grossiste Climatisation Gabès",
-    contact_person: "M. Tarek Yahia",
-    phone: "+216 75 271 450",
-    email: "clima.sud@gnet.tn",
-    address: "Zone Industrielle, Gabès",
-    notes: "Fournisseur compresseurs, gaz R410A / R32 et liaisons frigorifiques",
-    outstanding_amount: 0,
-    is_active: true,
-  },
-  {
-    id: "supp-03",
-    name: "Station Agil Tataouine",
-    contact_person: "Service Flotte",
-    phone: "+216 75 761 020",
-    email: "agil.tataouine@agil.com.tn",
-    address: "Avenue Habib Bourguiba, Tataouine",
-    notes: "Compte carburant utilitaires chantier",
-    outstanding_amount: 0,
-    is_active: true,
-  },
-];
+function generateSupplierId(): string {
+  return `supp-${Date.now()}`;
+}
 
 interface Props {
   initialSuppliers: SupplierItem[];
 }
 
 export function AdminSuppliersClient({ initialSuppliers }: Props) {
-  const [suppliers, setSuppliers] = useState<SupplierItem[]>(
-    initialSuppliers.length > 0 ? initialSuppliers : defaultDemoSuppliers
-  );
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedSuppliers, setAddedSuppliers] = useState<SupplierItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formName, setFormName] = useState("");
@@ -89,35 +56,14 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialSuppliers.length === 0) {
-            setSuppliers(parsed);
-            return;
-          }
-        }
-      } catch {}
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialSuppliers]);
+  const baseList = [...addedSuppliers, ...initialSuppliers];
+  const suppliers = baseList.filter(
+    (s) => !deletedIds.includes(s.id) && !deletedIds.includes(s.name)
+  );
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const save = (next: SupplierItem[]) => {
-    setSuppliers(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch (e) {
-      console.error("save suppliers failed", e);
-    }
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -145,7 +91,7 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
     }
 
     setIsSubmitting(true);
-    let createdId = `supp-${Date.now()}`;
+    let createdId = generateSupplierId();
 
     try {
       const res = await createSupplierAction({
@@ -175,7 +121,8 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
       is_active: true,
     };
 
-    save([newSupp, ...suppliers]);
+    setAddedSuppliers((prev) => [newSupp, ...prev]);
+    router.refresh();
     setIsSubmitting(false);
     showToast(`Fournisseur "${newSupp.name}" ajouté avec succès !`);
     setIsModalOpen(false);
@@ -191,12 +138,14 @@ export function AdminSuppliersClient({ initialSuppliers }: Props) {
   };
 
   const handleDelete = async (id: string) => {
+    setDeletedIds((prev) => [...prev, id]);
+    setAddedSuppliers((prev) => prev.filter((s) => s.id !== id && s.name !== id));
     try {
       await deleteSupplierAction(id);
     } catch (err) {
       console.error("Failed to delete supplier from database:", err);
     }
-    save(suppliers.filter((s) => s.id !== id));
+    router.refresh();
     setDeleteConfirmId(null);
     showToast("Fournisseur supprimé.");
   };

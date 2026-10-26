@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
@@ -34,39 +35,6 @@ export interface ExpenseItem {
 
 const STORAGE_KEY = "technovolt_admin_expenses";
 
-const defaultDemoExpenses: ExpenseItem[] = [
-  {
-    id: "exp-01",
-    reference: "DEP-2026-0041",
-    expense_date: "2026-10-23",
-    category_name: "Matériel Électrique",
-    supplier_name: "Comptoir Électrique du Sud",
-    description: "Achat 4 rouleaux câble 3x2.5mm² Nexans et 20 disjoncteurs Hager 16A",
-    amount: 580.0,
-    currency: "TND",
-    tax_amount: 92.6,
-    payment_method: "Virement",
-    payment_status: "paid",
-    notes: "Facture N° FC-8921",
-    created_at: "2026-10-23T10:00:00Z",
-  },
-  {
-    id: "exp-02",
-    reference: "DEP-2026-0042",
-    expense_date: "2026-10-21",
-    category_name: "Carburant & Déplacement",
-    supplier_name: "Station Agil Tataouine",
-    description: "Plein gasoil utilitaire Peugeot Partner intervention Remada",
-    amount: 110.0,
-    currency: "TND",
-    tax_amount: 0,
-    payment_method: "Espèces",
-    payment_status: "paid",
-    notes: "Reçu N° 44129",
-    created_at: "2026-10-21T08:30:00Z",
-  },
-];
-
 const fallbackSuppliers = [
   "Comptoir Électrique du Sud",
   "STEG Tataouine",
@@ -85,14 +53,22 @@ const categories = [
   "Autre",
 ];
 
+function generateExpenseId(): string {
+  return `exp-${Date.now()}`;
+}
+
+function generateExpenseRef(): string {
+  return `DEP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
 interface Props {
   initialExpenses: ExpenseItem[];
 }
 
 export function AdminExpensesClient({ initialExpenses }: Props) {
-  const [expenses, setExpenses] = useState<ExpenseItem[]>(
-    initialExpenses.length > 0 ? initialExpenses : defaultDemoExpenses
-  );
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedExpenses, setAddedExpenses] = useState<ExpenseItem[]>([]);
   const [availableSuppliers, setAvailableSuppliers] = useState<string[]>(fallbackSuppliers);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,19 +87,15 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const baseList = [...addedExpenses, ...initialExpenses];
+  const expenses = baseList.filter(
+    (e) => !deletedIds.includes(e.id) && !deletedIds.includes(e.reference)
+  );
+
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
-        // 1. Expenses
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialExpenses.length === 0) {
-            setExpenses(parsed);
-          }
-        }
-
-        // 2. Suppliers
+        // Suppliers from localStorage
         const suppRaw = localStorage.getItem("technovolt_admin_suppliers");
         if (suppRaw) {
           const parsedSupp = JSON.parse(suppRaw);
@@ -135,21 +107,11 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
       } catch {}
     }, 0);
     return () => clearTimeout(timer);
-  }, [initialExpenses]);
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const save = (next: ExpenseItem[]) => {
-    setExpenses(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch (e) {
-      console.error("save expenses failed", e);
-    }
   };
 
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -173,8 +135,8 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
     }
 
     setIsSubmitting(true);
-    let createdId = `exp-${Date.now()}`;
-    let createdRef = `DEP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    let createdId = generateExpenseId();
+    let createdRef = generateExpenseRef();
 
     try {
       const res = await createExpenseAction({
@@ -189,6 +151,7 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
       if (res.success && res.data) {
         createdId = res.data.id;
         if (res.data.reference) createdRef = res.data.reference;
+        router.refresh();
       }
     } catch (err) {
       console.error("Failed to sync expense to database:", err);
@@ -210,7 +173,7 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
       created_at: new Date().toISOString(),
     };
 
-    save([newExp, ...expenses]);
+    setAddedExpenses((prev) => [newExp, ...prev]);
     setIsSubmitting(false);
     showToast(`Dépense ${newExp.reference} enregistrée avec succès !`);
     setIsModalOpen(false);
@@ -228,14 +191,31 @@ export function AdminExpensesClient({ initialExpenses }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteExpenseAction(id);
-    } catch (err) {
-      console.error("Failed to delete expense from database:", err);
-    }
-    save(expenses.filter((e) => e.id !== id));
+    // 1. Optimistic removal
+    setDeletedIds((prev) => [...prev, id]);
     setDeleteConfirmId(null);
     showToast("Dépense supprimée.");
+
+    try {
+      const remaining = expenses.filter((e) => e.id !== id && e.reference !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+
+    // 2. Database persistence
+    try {
+      const res = await deleteExpenseAction(id);
+      if (!res.success) {
+        showToast(res.error || "Erreur lors de la suppression.");
+        setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to delete expense from database:", err);
+      showToast("Erreur lors de la suppression.");
+      setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+    }
   };
 
   const filteredExpenses = expenses.filter((e) => {

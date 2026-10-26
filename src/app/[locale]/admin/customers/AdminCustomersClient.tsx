@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -32,69 +33,24 @@ export interface CustomerItem {
 
 const STORAGE_KEY = "technovolt_admin_customers";
 
-export const defaultDemoCustomers: CustomerItem[] = [
-  {
-    id: "cust-01",
-    reference_number: "CLI-2026-0012",
-    full_name: "Société Sud Équipement",
-    phone: "+216 75 760 111",
-    email: "direction@sud-equipement.tn",
-    company_name: "Sud Équipement SARL",
-    tax_id: "1428590/M/A/000",
-    notes: "Zone Industrielle Tataouine",
-    is_active: true,
-    total_spent: 3450.0,
-    outstanding_balance: 0,
-  },
-  {
-    id: "cust-02",
-    reference_number: "CLI-2026-0013",
-    full_name: "Mourad Chaabane",
-    phone: "+216 97 554 112",
-    email: "mourad.chaabane@gnet.tn",
-    company_name: "Particulier",
-    tax_id: "",
-    notes: "Cité Ennour, Tataouine",
-    is_active: true,
-    total_spent: 850.0,
-    outstanding_balance: 0,
-  },
-  {
-    id: "cust-03",
-    reference_number: "CLI-2026-0014",
-    full_name: "Café Essafsaf",
-    phone: "+216 75 761 900",
-    email: "contact@essafsaf.tn",
-    company_name: "Café Restaurant Essafsaf",
-    tax_id: "0982341/B/B/000",
-    notes: "Avenue Habib Bourguiba, Tataouine",
-    is_active: true,
-    total_spent: 1200.0,
-    outstanding_balance: 0,
-  },
-  {
-    id: "cust-04",
-    reference_number: "CLI-2026-0015",
-    full_name: "Dr. Lassaad Marzouki",
-    phone: "+216 98 332 110",
-    email: "dr.marzouki@clinique.tn",
-    company_name: "Cabinet Médical",
-    tax_id: "",
-    notes: "Cité El Mahrajène, Tataouine",
-    is_active: true,
-    total_spent: 450.0,
-    outstanding_balance: 0,
-  },
-];
+export const defaultDemoCustomers: CustomerItem[] = [];
+
+function generateCustomerId(): string {
+  return `cust-${Date.now()}`;
+}
+
+function generateCustomerRef(): string {
+  return `CLI-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+}
 
 interface Props {
   initialCustomers: CustomerItem[];
 }
 
 export function AdminCustomersClient({ initialCustomers }: Props) {
-  const [customers, setCustomers] = useState<CustomerItem[]>(
-    initialCustomers.length > 0 ? initialCustomers : defaultDemoCustomers
-  );
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedCustomers, setAddedCustomers] = useState<CustomerItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formName, setFormName] = useState("");
@@ -106,35 +62,14 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialCustomers.length === 0) {
-            setCustomers(parsed);
-            return;
-          }
-        }
-      } catch {}
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialCustomers]);
+  const baseList = [...addedCustomers, ...initialCustomers];
+  const customers = baseList.filter(
+    (c) => !deletedIds.includes(c.id) && !deletedIds.includes(c.reference_number)
+  );
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const save = (next: CustomerItem[]) => {
-    setCustomers(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch (e) {
-      console.error("save customers failed", e);
-    }
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -157,8 +92,8 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
     }
 
     setIsSubmitting(true);
-    let createdId = `cust-${Date.now()}`;
-    let createdRef = `CLI-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    let createdId = generateCustomerId();
+    let createdRef = generateCustomerRef();
 
     try {
       const res = await createCustomerAction({
@@ -170,6 +105,7 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
       if (res.success && res.data) {
         createdId = res.data.id;
         if (res.data.reference_number) createdRef = res.data.reference_number;
+        router.refresh();
       }
     } catch (err) {
       console.error("Failed to sync customer to database:", err);
@@ -189,7 +125,7 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
       outstanding_balance: 0,
     };
 
-    save([newCust, ...customers]);
+    setAddedCustomers((prev) => [newCust, ...prev]);
     setIsSubmitting(false);
     showToast("Client ajouté avec succès !");
     setIsModalOpen(false);
@@ -201,14 +137,31 @@ export function AdminCustomersClient({ initialCustomers }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteCustomerAction(id);
-    } catch (err) {
-      console.error("Failed to delete customer from database:", err);
-    }
-    save(customers.filter((c) => c.id !== id));
+    // 1. Optimistic removal
+    setDeletedIds((prev) => [...prev, id]);
     setDeleteConfirmId(null);
-    showToast("Client supprimé.");
+
+    try {
+      const remaining = customers.filter((c) => c.id !== id && c.reference_number !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+
+    // 2. Database persistence
+    try {
+      const res = await deleteCustomerAction(id);
+      if (!res.success) {
+        showToast(res.error || "Erreur lors de la suppression du client.");
+        setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+      } else {
+        showToast("Client supprimé.");
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to delete customer:", err);
+      showToast("Erreur lors de la suppression du client.");
+      setDeletedIds((prev) => prev.filter((dId) => dId !== id));
+    }
   };
 
   const filtered = customers.filter(

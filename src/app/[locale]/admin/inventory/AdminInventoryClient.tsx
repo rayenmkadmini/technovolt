@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
@@ -30,58 +31,18 @@ export interface ProductItem {
   created_at: string;
 }
 
-const STORAGE_KEY = "technovolt_admin_products";
-
-const defaultDemoProducts: ProductItem[] = [
-  {
-    id: "prod-01",
-    sku: "DISJ-SCHN-16A",
-    name: "Disjoncteur modulaire 16A Courbe C Schneider",
-    category: "Tableaux & Protections",
-    purchase_cost: 9.5,
-    sale_price: 14.5,
-    quantity: 35,
-    low_stock_threshold: 10,
-    unit: "pièce",
-    is_active: true,
-    created_at: "2026-10-10T08:00:00Z",
-  },
-  {
-    id: "prod-02",
-    sku: "DIFF-SCHN-40A",
-    name: "Interrupteur différentiel 40A 30mA Type AC",
-    category: "Tableaux & Protections",
-    purchase_cost: 42.0,
-    sale_price: 58.0,
-    quantity: 12,
-    low_stock_threshold: 5,
-    unit: "pièce",
-    is_active: true,
-    created_at: "2026-10-10T08:00:00Z",
-  },
-  {
-    id: "prod-03",
-    sku: "CAB-R2V-3G25",
-    name: "Câble cuivre rigide R2V 3G 2.5 mm² (couronne 100m)",
-    category: "Câbles & Conducteurs",
-    purchase_cost: 165.0,
-    sale_price: 215.0,
-    quantity: 8,
-    low_stock_threshold: 3,
-    unit: "couronne",
-    is_active: true,
-    created_at: "2026-10-12T09:00:00Z",
-  },
-];
+function generateProductId(): string {
+  return `prod-${Date.now()}`;
+}
 
 interface Props {
   initialProducts: ProductItem[];
 }
 
 export function AdminInventoryClient({ initialProducts }: Props) {
-  const [products, setProducts] = useState<ProductItem[]>(
-    initialProducts.length > 0 ? initialProducts : defaultDemoProducts
-  );
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedProducts, setAddedProducts] = useState<ProductItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formName, setFormName] = useState("");
@@ -97,35 +58,14 @@ export function AdminInventoryClient({ initialProducts }: Props) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialProducts.length === 0) {
-            setProducts(parsed);
-            return;
-          }
-        }
-      } catch {}
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialProducts]);
+  const baseList = [...addedProducts, ...initialProducts];
+  const products = baseList.filter(
+    (p) => !deletedIds.includes(p.id) && !deletedIds.includes(p.sku)
+  );
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const save = (next: ProductItem[]) => {
-    setProducts(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch (e) {
-      console.error("save products failed", e);
-    }
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -157,7 +97,7 @@ export function AdminInventoryClient({ initialProducts }: Props) {
     }
 
     setIsSubmitting(true);
-    let createdId = `prod-${Date.now()}`;
+    let createdId = generateProductId();
 
     try {
       const res = await createProductAction({
@@ -191,7 +131,8 @@ export function AdminInventoryClient({ initialProducts }: Props) {
       created_at: new Date().toISOString(),
     };
 
-    save([newProd, ...products]);
+    setAddedProducts((prev) => [newProd, ...prev]);
+    router.refresh();
     setIsSubmitting(false);
     showToast(`Article "${newProd.name}" (${newProd.sku}) ajouté au stock !`);
     setIsModalOpen(false);
@@ -207,12 +148,14 @@ export function AdminInventoryClient({ initialProducts }: Props) {
   };
 
   const handleDelete = async (id: string) => {
+    setDeletedIds((prev) => [...prev, id]);
+    setAddedProducts((prev) => prev.filter((p) => p.id !== id && p.sku !== id));
     try {
       await deleteProductAction(id);
     } catch (err) {
       console.error("Failed to delete product from database:", err);
     }
-    save(products.filter((p) => p.id !== id));
+    router.refresh();
     setDeleteConfirmId(null);
     showToast("Article supprimé.");
   };

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
@@ -44,63 +45,19 @@ const DEFAULT_TYPES = [
   "Autre prestation sur mesure",
 ];
 
-const defaultDemoServices: ServiceItem[] = [
-  {
-    id: "srv-01",
-    title: "Installation Tableau Électrique & TGBT",
-    short_description: "Pose d'armoire modulaire, disjoncteurs différentiels 30mA et parafoudre.",
-    category: "Tableaux & Sécurité",
-    service_type: "Mise en conformité tableau & disjoncteurs",
-    price_from: 350.0,
-    show_price: false,
-    estimated_duration: "4-6 heures",
-    status: "published",
-    sort_order: 1,
-    is_active: true,
-    created_at: "2026-10-15T09:00:00Z",
-  },
-  {
-    id: "srv-02",
-    title: "Dépannage Électrique d'Urgence 24/7",
-    short_description: "Diagnostic rapide de court-circuit, panne générale et remplacement d'urgence.",
-    category: "Dépannage Urgent",
-    service_type: "Dépannage d'urgence 24/7 (court-circuit / panne)",
-    price_from: 80.0,
-    show_price: false,
-    estimated_duration: "1-2 heures",
-    status: "published",
-    sort_order: 2,
-    is_active: true,
-    created_at: "2026-10-12T11:00:00Z",
-  },
-  {
-    id: "srv-03",
-    title: "Installation & Recharge Climatiseur",
-    short_description: "Pose unité intérieure/extérieure, tirage au vide et mise en service frigorifique.",
-    category: "Climatisation",
-    service_type: "Installation & entretien climatisation",
-    price_from: 180.0,
-    show_price: false,
-    estimated_duration: "3-4 heures",
-    status: "published",
-    sort_order: 3,
-    is_active: true,
-    created_at: "2026-10-10T08:00:00Z",
-  },
-];
-
-const STORAGE_KEY = "technovolt_service_types";
-const SERVICES_STORAGE = "technovolt_admin_services";
+function generateServiceId(): string {
+  return `srv-${Date.now()}`;
+}
 
 interface Props {
   initialServices: ServiceItem[];
 }
 
 export function AdminServicesClient({ initialServices }: Props) {
-  const [services, setServices] = useState<ServiceItem[]>(
-    initialServices.length > 0 ? initialServices : defaultDemoServices
-  );
-  const [serviceTypes, setServiceTypes] = useState<string[]>(DEFAULT_TYPES);
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [addedServices, setAddedServices] = useState<ServiceItem[]>([]);
+  const serviceTypes = DEFAULT_TYPES;
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formTitle, setFormTitle] = useState("");
@@ -116,42 +73,14 @@ export function AdminServicesClient({ initialServices }: Props) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setServiceTypes(parsed);
-          }
-        }
-        const saved = localStorage.getItem(SERVICES_STORAGE);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialServices.length === 0) {
-            setServices(parsed);
-            return;
-          }
-        }
-      } catch {}
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialServices]);
+  const baseList = [...addedServices, ...initialServices];
+  const services = baseList.filter(
+    (s) => !deletedIds.includes(s.id) && !deletedIds.includes(s.title)
+  );
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  const saveServices = (next: ServiceItem[]) => {
-    setServices(next);
-    try {
-      localStorage.setItem(SERVICES_STORAGE, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch (e) {
-      console.error("save services failed", e);
-    }
   };
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -185,7 +114,7 @@ export function AdminServicesClient({ initialServices }: Props) {
     }
 
     setIsSubmitting(true);
-    let createdId = `srv-${Date.now()}`;
+    let createdId = generateServiceId();
 
     try {
       const res = await createServiceAction({
@@ -220,7 +149,8 @@ export function AdminServicesClient({ initialServices }: Props) {
       created_at: new Date().toISOString(),
     };
 
-    saveServices([newSrv, ...services]);
+    setAddedServices((prev) => [newSrv, ...prev]);
+    router.refresh();
     setIsSubmitting(false);
     showToast(`Service "${newSrv.title}" ajouté avec succès !`);
     setIsModalOpen(false);
@@ -238,12 +168,14 @@ export function AdminServicesClient({ initialServices }: Props) {
   };
 
   const handleDelete = async (id: string) => {
+    setDeletedIds((prev) => [...prev, id]);
+    setAddedServices((prev) => prev.filter((s) => s.id !== id && s.title !== id));
     try {
       await deleteServiceAction(id);
     } catch (err) {
       console.error("Failed to delete service from database:", err);
     }
-    saveServices(services.filter((s) => s.id !== id));
+    router.refresh();
     setDeleteConfirmId(null);
     showToast("Service supprimé.");
   };
