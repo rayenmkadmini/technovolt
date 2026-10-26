@@ -2,6 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminSuppliersClient, SupplierItem } from "./AdminSuppliersClient";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminSuppliersPage({
   params,
 }: {

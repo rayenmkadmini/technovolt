@@ -5,6 +5,7 @@ import { Link, useRouter } from "@/i18n/routing";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
+import { createInvoiceAction } from "@/app/actions/adminActions";
 import {
   FileText,
   Plus,
@@ -100,7 +101,9 @@ export default function NewInvoicePage() {
     window.print();
   };
 
-  const handleSave = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = async () => {
     if (!customerName.trim()) {
       alert("Veuillez saisir le nom du client.");
       return;
@@ -111,27 +114,54 @@ export default function NewInvoicePage() {
       return;
     }
 
-    const newInvoice = {
-      id: `inv-${Date.now()}`,
-      invoice_number: invoiceNumber,
-      customer_name: customerName.trim(),
-      customer_phone: customerPhone.trim(),
-      customer_address: customerAddress.trim(),
-      issue_date: issueDate,
-      due_date: dueDate,
-      subtotal: subtotalHT,
-      tax_rate: taxRate,
-      tax_amount: taxAmount,
-      total: totalTTC,
-      amount_paid: 0,
-      balance_due: totalTTC,
-      status: "issued" as const,
-      items: validItems,
-      payment_terms: paymentTerms,
-      created_at: new Date().toISOString(),
-    };
+    setIsSubmitting(true);
 
     try {
+      // 1. Persist to Supabase Database
+      await createInvoiceAction({
+        invoice_number: invoiceNumber,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        customer_address: customerAddress.trim(),
+        issue_date: issueDate,
+        due_date: dueDate,
+        subtotal: subtotalHT,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        total: totalTTC,
+        amount_paid: 0,
+        balance_due: totalTTC,
+        status: "issued",
+        payment_terms: paymentTerms,
+        items: validItems.map((it) => ({
+          description: it.description,
+          quantity: it.quantity,
+          unit: it.unit,
+          unit_price: it.unit_price,
+        })),
+      });
+
+      // 2. Local storage cache update
+      const newInvoice = {
+        id: `inv-${Date.now()}`,
+        invoice_number: invoiceNumber,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        customer_address: customerAddress.trim(),
+        issue_date: issueDate,
+        due_date: dueDate,
+        subtotal: subtotalHT,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        total: totalTTC,
+        amount_paid: 0,
+        balance_due: totalTTC,
+        status: "issued" as const,
+        items: validItems,
+        payment_terms: paymentTerms,
+        created_at: new Date().toISOString(),
+      };
+
       const STORAGE_KEY = "technovolt_admin_invoices";
       const existing = localStorage.getItem(STORAGE_KEY);
       let list = [];
@@ -149,7 +179,7 @@ export default function NewInvoicePage() {
     setSavedSuccess(true);
     setTimeout(() => {
       router.push("/admin/invoices");
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -182,7 +212,7 @@ export default function NewInvoicePage() {
             variant="secondary"
             size="sm"
             onClick={handleSave}
-            disabled={savedSuccess}
+            disabled={savedSuccess || isSubmitting}
             className="gap-2 font-bold"
           >
             {savedSuccess ? (

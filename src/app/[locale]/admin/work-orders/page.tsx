@@ -2,6 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminWorkOrdersClient, WorkOrderItem } from "./AdminWorkOrdersClient";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminWorkOrdersPage({
   params,
 }: {

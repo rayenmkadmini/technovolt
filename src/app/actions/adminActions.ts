@@ -640,13 +640,142 @@ export async function deleteProjectAction(id: string) {
 }
 
 // --- INVOICES & QUOTATIONS ---
+export async function createInvoiceAction(data: {
+  invoice_number?: string;
+  customer_name: string;
+  customer_phone?: string;
+  customer_address?: string;
+  issue_date: string;
+  due_date: string;
+  subtotal: number;
+  tax_rate?: number;
+  tax_amount: number;
+  total: number;
+  amount_paid?: number;
+  balance_due?: number;
+  status?: string;
+  payment_terms?: string;
+  items?: Array<{
+    description: string;
+    quantity: number;
+    unit?: string;
+    unit_price: number;
+  }>;
+}) {
+  try {
+    const supabase = createAdminClient();
+
+    let customerId: string | null = null;
+    if (data.customer_name) {
+      const { data: existingCust } = await supabase
+        .from("customers")
+        .select("id")
+        .ilike("full_name", data.customer_name.trim())
+        .limit(1)
+        .maybeSingle();
+
+      if (existingCust) {
+        customerId = existingCust.id;
+      } else {
+        const custRef = `CL-${new Date().getFullYear().toString().slice(-2)}${Math.floor(10 + Math.random() * 90)}-${Math.floor(10 + Math.random() * 90)}`;
+        const { data: newCust } = await supabase
+          .from("customers")
+          .insert({
+            reference: custRef,
+            full_name: data.customer_name.trim(),
+            phone: data.customer_phone || "+216 75 000 000",
+            notes: data.customer_address || "Tataouine",
+          })
+          .select("id")
+          .single();
+        customerId = newCust?.id || null;
+      }
+    }
+
+    if (!customerId) {
+      const { data: anyCust } = await supabase.from("customers").select("id").limit(1).single();
+      customerId = anyCust?.id;
+    }
+
+    const ref = data.invoice_number || `FAC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const { data: inserted, error } = await supabase
+      .from("invoices")
+      .insert({
+        invoice_number: ref,
+        customer_id: customerId,
+        issue_date: data.issue_date || new Date().toISOString().slice(0, 10),
+        due_date: data.due_date || new Date().toISOString().slice(0, 10),
+        subtotal: data.subtotal || 0,
+        tax_rate: data.tax_rate ?? 19,
+        tax_amount: data.tax_amount || 0,
+        discount_amount: 0,
+        total: data.total || 0,
+        amount_paid: data.amount_paid || 0,
+        balance_due: data.balance_due ?? data.total ?? 0,
+        currency: "TND",
+        payment_terms: data.payment_terms || null,
+        status: data.status || "issued",
+      })
+      .select("*, customers(full_name, phone, notes)")
+      .single();
+
+    if (error) throw error;
+
+    if (data.items && data.items.length > 0 && inserted?.id) {
+      const lineItems = data.items.map((it) => ({
+        invoice_id: inserted.id,
+        description: it.description,
+        quantity: it.quantity,
+        unit: it.unit || "pièce",
+        unit_price: it.unit_price,
+        tax_rate: data.tax_rate ?? 19,
+      }));
+      await supabase.from("invoice_items").insert(lineItems);
+    }
+
+    revalidatePath("/[locale]/admin/invoices", "page");
+    revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/[locale]/admin/payments", "page");
+    revalidatePath("/", "layout");
+    return { success: true, data: inserted };
+  } catch (err: any) {
+    console.error("createInvoiceAction error:", err);
+    return { success: false, error: err.message || "Failed to create invoice" };
+  }
+}
+
 export async function deleteInvoiceAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("invoices").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let invoiceUuid: string | null = null;
+    if (isUuid) {
+      invoiceUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("invoice_number", id)
+        .maybeSingle();
+      if (matched?.id) {
+        invoiceUuid = matched.id;
+      }
+    }
+
+    if (invoiceUuid) {
+      // Clean dependent allocations and items first so ON DELETE RESTRICT constraint is never violated
+      await supabase.from("payment_allocations").delete().eq("invoice_id", invoiceUuid);
+      await supabase.from("invoice_items").delete().eq("invoice_id", invoiceUuid);
+      const { error } = await supabase.from("invoices").delete().eq("id", invoiceUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/invoices", "page");
     revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/[locale]/admin/payments", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteInvoiceAction error:", err);
@@ -654,12 +783,135 @@ export async function deleteInvoiceAction(id: string) {
   }
 }
 
+export async function createQuotationAction(data: {
+  quotation_number?: string;
+  customer_name: string;
+  customer_phone?: string;
+  customer_address?: string;
+  issue_date: string;
+  valid_until: string;
+  subtotal: number;
+  discount_amount?: number;
+  tax_rate?: number;
+  tax_amount: number;
+  total: number;
+  status?: string;
+  terms?: string;
+  items?: Array<{
+    description: string;
+    quantity: number;
+    unit?: string;
+    unit_price: number;
+  }>;
+}) {
+  try {
+    const supabase = createAdminClient();
+
+    let customerId: string | null = null;
+    if (data.customer_name) {
+      const { data: existingCust } = await supabase
+        .from("customers")
+        .select("id")
+        .ilike("full_name", data.customer_name.trim())
+        .limit(1)
+        .maybeSingle();
+
+      if (existingCust) {
+        customerId = existingCust.id;
+      } else {
+        const custRef = `CL-${new Date().getFullYear().toString().slice(-2)}${Math.floor(10 + Math.random() * 90)}-${Math.floor(10 + Math.random() * 90)}`;
+        const { data: newCust } = await supabase
+          .from("customers")
+          .insert({
+            reference: custRef,
+            full_name: data.customer_name.trim(),
+            phone: data.customer_phone || "+216 75 000 000",
+            notes: data.customer_address || "Tataouine",
+          })
+          .select("id")
+          .single();
+        customerId = newCust?.id || null;
+      }
+    }
+
+    if (!customerId) {
+      const { data: anyCust } = await supabase.from("customers").select("id").limit(1).single();
+      customerId = anyCust?.id;
+    }
+
+    const ref = data.quotation_number || `DEV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const { data: inserted, error } = await supabase
+      .from("quotations")
+      .insert({
+        quotation_number: ref,
+        customer_id: customerId,
+        issue_date: data.issue_date || new Date().toISOString().slice(0, 10),
+        valid_until: data.valid_until || new Date().toISOString().slice(0, 10),
+        subtotal: data.subtotal || 0,
+        discount_amount: data.discount_amount || 0,
+        tax_rate: data.tax_rate ?? 19,
+        tax_amount: data.tax_amount || 0,
+        total: data.total || 0,
+        currency: "TND",
+        terms: data.terms || null,
+        status: data.status || "sent",
+      })
+      .select("*, customers(full_name, phone, notes)")
+      .single();
+
+    if (error) throw error;
+
+    if (data.items && data.items.length > 0 && inserted?.id) {
+      const lineItems = data.items.map((it) => ({
+        quotation_id: inserted.id,
+        description: it.description,
+        quantity: it.quantity,
+        unit: it.unit || "pièce",
+        unit_price: it.unit_price,
+        tax_rate: data.tax_rate ?? 19,
+      }));
+      await supabase.from("quotation_items").insert(lineItems);
+    }
+
+    revalidatePath("/[locale]/admin/quotations", "page");
+    revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
+    return { success: true, data: inserted };
+  } catch (err: any) {
+    console.error("createQuotationAction error:", err);
+    return { success: false, error: err.message || "Failed to create quotation" };
+  }
+}
+
 export async function deleteQuotationAction(id: string) {
   try {
     const supabase = createAdminClient();
-    const { error } = await supabase.from("quotations").delete().eq("id", id);
-    if (error) throw error;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+    let quotationUuid: string | null = null;
+    if (isUuid) {
+      quotationUuid = id;
+    } else {
+      const { data: matched } = await supabase
+        .from("quotations")
+        .select("id")
+        .eq("quotation_number", id)
+        .maybeSingle();
+      if (matched?.id) {
+        quotationUuid = matched.id;
+      }
+    }
+
+    if (quotationUuid) {
+      await supabase.from("quotation_items").delete().eq("quotation_id", quotationUuid);
+      const { error } = await supabase.from("quotations").delete().eq("id", quotationUuid);
+      if (error) throw error;
+    }
+
     revalidatePath("/[locale]/admin/quotations", "page");
+    revalidatePath("/[locale]/admin", "page");
+    revalidatePath("/", "layout");
     return { success: true };
   } catch (err: any) {
     console.error("deleteQuotationAction error:", err);

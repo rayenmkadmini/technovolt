@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useRouter } from "@/i18n/routing";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
-import { deleteQuotationAction } from "@/app/actions/adminActions";
+import { deleteQuotationAction, createInvoiceAction } from "@/app/actions/adminActions";
 import {
   FileText,
   Plus,
@@ -36,37 +36,6 @@ export interface QuotationItem {
 }
 
 const STORAGE_KEY = "technovolt_admin_quotations";
-
-const defaultDemoQuotations: QuotationItem[] = [
-  {
-    id: "quot-01",
-    quotation_number: "DEV-2026-0044",
-    customer_name: "Youssef Ben Salem",
-    customer_phone: "+216 98 123 456",
-    customer_address: "Tataouine — Cité Ennour",
-    issue_date: "2026-10-22",
-    valid_until: "2026-11-21",
-    subtotal: 820.0,
-    tax_amount: 155.8,
-    total: 975.8,
-    status: "sent",
-    created_at: "2026-10-22T10:00:00Z",
-  },
-  {
-    id: "quot-02",
-    quotation_number: "DEV-2026-0043",
-    customer_name: "Hôtel Sangho Tataouine",
-    customer_phone: "+216 75 860 120",
-    customer_address: "Zone Touristique, Tataouine",
-    issue_date: "2026-10-15",
-    valid_until: "2026-11-14",
-    subtotal: 2100.0,
-    tax_amount: 399.0,
-    total: 2499.0,
-    status: "accepted",
-    created_at: "2026-10-15T14:00:00Z",
-  },
-];
 
 function buildInvoiceFromQuote(quote: QuotationItem) {
   const timestamp = Date.now();
@@ -110,37 +79,16 @@ export function AdminQuotationsClient({
   initialQuotations?: QuotationItem[];
 }) {
   const router = useRouter();
-  const [quotations, setQuotations] = useState<QuotationItem[]>(
-    initialQuotations.length > 0 ? initialQuotations : defaultDemoQuotations
-  );
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [convertedIds, setConvertedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialQuotations.length === 0) {
-            setQuotations(parsed);
-            return;
-          }
-        }
-      } catch {}
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialQuotations]);
-
-  const saveQuotations = (next: QuotationItem[]) => {
-    setQuotations(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch {}
-  };
+  const quotations = initialQuotations
+    .filter((q) => !deletedIds.includes(q.id) && !deletedIds.includes(q.quotation_number))
+    .map((q) => (convertedIds.includes(q.id) ? { ...q, status: "converted" as const } : q));
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -148,18 +96,50 @@ export function AdminQuotationsClient({
   };
 
   const handleDelete = async (id: string) => {
+    // 1. Optimistic removal
+    setDeletedIds((prev) => [...prev, id]);
+    setDeleteConfirmId(null);
+    showToast("Devis supprimé.");
+
     try {
-      await deleteQuotationAction(id);
+      const remaining = quotations.filter((q) => q.id !== id && q.quotation_number !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+
+    // 2. Database deletion
+    try {
+      const res = await deleteQuotationAction(id);
+      if (!res.success) {
+        console.error("Failed to delete quotation from Supabase:", res.error);
+      }
+      router.refresh();
     } catch (err) {
       console.error("Failed to delete quotation from database:", err);
     }
-    saveQuotations(quotations.filter((q) => q.id !== id));
-    setDeleteConfirmId(null);
-    showToast("Devis supprimé.");
   };
 
-  const handleConvertToInvoice = (quote: QuotationItem) => {
+  const handleConvertToInvoice = async (quote: QuotationItem) => {
     const newInvoice = buildInvoiceFromQuote(quote);
+
+    try {
+      await createInvoiceAction({
+        invoice_number: newInvoice.invoice_number,
+        customer_name: quote.customer_name,
+        customer_phone: quote.customer_phone,
+        customer_address: quote.customer_address,
+        issue_date: newInvoice.issue_date,
+        due_date: newInvoice.due_date,
+        subtotal: quote.subtotal,
+        tax_amount: quote.tax_amount,
+        total: quote.total,
+        amount_paid: 0,
+        balance_due: quote.total,
+        status: "issued",
+      });
+    } catch (err) {
+      console.error("Failed to convert quote to invoice in DB:", err);
+    }
 
     try {
       const invStorage = localStorage.getItem("technovolt_admin_invoices");
@@ -174,15 +154,12 @@ export function AdminQuotationsClient({
     } catch {}
 
     // Mark quote as converted
-    const updatedQuotes = quotations.map((q) =>
-      q.id === quote.id ? { ...q, status: "converted" as const } : q
-    );
-    saveQuotations(updatedQuotes);
+    setConvertedIds((prev) => [...prev, quote.id]);
 
     showToast(`Devis ${quote.quotation_number} converti avec succès en Facture ${newInvoice.invoice_number} !`);
     setTimeout(() => {
       router.push("/admin/invoices");
-    }, 1500);
+    }, 1200);
   };
 
   const filteredQuotes = quotations.filter((q) => {

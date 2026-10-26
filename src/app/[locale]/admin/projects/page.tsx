@@ -2,6 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { getProjects } from "@/lib/data/services";
 import { AdminProjectsClient, ProjectItem } from "./AdminProjectsClient";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminProjectsPage({
   params,
 }: {

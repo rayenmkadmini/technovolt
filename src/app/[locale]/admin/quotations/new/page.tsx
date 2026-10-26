@@ -5,6 +5,7 @@ import { Link, useRouter } from "@/i18n/routing";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
+import { createQuotationAction } from "@/app/actions/adminActions";
 import {
   FileText,
   Plus,
@@ -103,7 +104,9 @@ export default function NewQuotationPage() {
     window.print();
   };
 
-  const handleSave = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = async () => {
     if (!customerName.trim()) {
       alert("Veuillez saisir le nom du client.");
       return;
@@ -114,25 +117,51 @@ export default function NewQuotationPage() {
       return;
     }
 
-    const newQuotation = {
-      id: `quot-${Date.now()}`,
-      quotation_number: quotationNumber,
-      customer_name: customerName.trim(),
-      customer_phone: customerPhone.trim(),
-      customer_address: customerAddress.trim(),
-      issue_date: issueDate,
-      valid_until: validUntil,
-      subtotal: subtotalHT,
-      discount_amount: discountAmount,
-      tax_amount: taxAmount,
-      total: totalTTC,
-      status: "sent" as const,
-      items: validItems,
-      terms,
-      created_at: new Date().toISOString(),
-    };
+    setIsSubmitting(true);
 
     try {
+      // 1. Persist in Supabase
+      await createQuotationAction({
+        quotation_number: quotationNumber,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        customer_address: customerAddress.trim(),
+        issue_date: issueDate,
+        valid_until: validUntil,
+        subtotal: subtotalHT,
+        discount_amount: discountAmount,
+        tax_rate: taxRate,
+        tax_amount: taxAmount,
+        total: totalTTC,
+        terms,
+        status: "sent",
+        items: validItems.map((it) => ({
+          description: it.description,
+          quantity: it.quantity,
+          unit: it.unit,
+          unit_price: it.unit_price,
+        })),
+      });
+
+      // 2. Local storage sync
+      const newQuotation = {
+        id: `quot-${Date.now()}`,
+        quotation_number: quotationNumber,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone.trim(),
+        customer_address: customerAddress.trim(),
+        issue_date: issueDate,
+        valid_until: validUntil,
+        subtotal: subtotalHT,
+        discount_amount: discountAmount,
+        tax_amount: taxAmount,
+        total: totalTTC,
+        status: "sent" as const,
+        items: validItems,
+        terms,
+        created_at: new Date().toISOString(),
+      };
+
       const STORAGE_KEY = "technovolt_admin_quotations";
       const existing = localStorage.getItem(STORAGE_KEY);
       let list = [];
@@ -150,7 +179,7 @@ export default function NewQuotationPage() {
     setSavedSuccess(true);
     setTimeout(() => {
       router.push("/admin/quotations");
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -183,7 +212,7 @@ export default function NewQuotationPage() {
             variant="default"
             size="sm"
             onClick={handleSave}
-            disabled={savedSuccess}
+            disabled={savedSuccess || isSubmitting}
             className="gap-2"
           >
             {savedSuccess ? (

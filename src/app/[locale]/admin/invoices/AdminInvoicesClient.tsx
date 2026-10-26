@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Link } from "@/i18n/routing";
+import { useState } from "react";
+import { Link, useRouter } from "@/i18n/routing";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -39,41 +39,6 @@ export interface InvoiceItem {
 
 const STORAGE_KEY = "technovolt_admin_invoices";
 
-const defaultDemoInvoices: InvoiceItem[] = [
-  {
-    id: "inv-01",
-    invoice_number: "FAC-2026-0038",
-    customer_name: "Société Sud Équipement",
-    customer_phone: "+216 75 760 111",
-    customer_address: "Rue Habib Bourguiba, Tataouine",
-    issue_date: "2026-10-18",
-    due_date: "2026-11-02",
-    subtotal: 1075.63,
-    tax_amount: 204.37,
-    total: 1280.0,
-    amount_paid: 900.0,
-    balance_due: 380.0,
-    status: "partially_paid",
-    created_at: "2026-10-18T10:00:00Z",
-  },
-  {
-    id: "inv-02",
-    invoice_number: "FAC-2026-0039",
-    customer_name: "Dr. Lassaad Marzouki",
-    customer_phone: "+216 98 221 004",
-    customer_address: "Avenue Taieb Mehiri, Tataouine",
-    issue_date: "2026-10-19",
-    due_date: "2026-11-03",
-    subtotal: 378.151,
-    tax_amount: 71.849,
-    total: 450.0,
-    amount_paid: 450.0,
-    balance_due: 0.0,
-    status: "paid",
-    created_at: "2026-10-19T14:30:00Z",
-  },
-];
-
 export function AdminInvoicesClient({
   locale,
   initialInvoices = [],
@@ -81,37 +46,16 @@ export function AdminInvoicesClient({
   locale: string;
   initialInvoices?: InvoiceItem[];
 }) {
-  const [invoices, setInvoices] = useState<InvoiceItem[]>(
-    initialInvoices.length > 0 ? initialInvoices : defaultDemoInvoices
-  );
+  const router = useRouter();
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved !== null) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0 && initialInvoices.length === 0) {
-            setInvoices(parsed);
-            return;
-          }
-        }
-      } catch {}
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [initialInvoices]);
-
-  const saveInvoices = (next: InvoiceItem[]) => {
-    setInvoices(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      window.dispatchEvent(new Event("storage"));
-    } catch {}
-  };
+  const invoices = initialInvoices.filter(
+    (inv) => !deletedIds.includes(inv.id) && !deletedIds.includes(inv.invoice_number)
+  );
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -119,14 +63,27 @@ export function AdminInvoicesClient({
   };
 
   const handleDelete = async (id: string) => {
+    // 1. Optimistic removal: immediate UI response
+    setDeletedIds((prev) => [...prev, id]);
+    setDeleteConfirmId(null);
+    showToast("Facture supprimée.");
+
     try {
-      await deleteInvoiceAction(id);
+      const remaining = invoices.filter((inv) => inv.id !== id && inv.invoice_number !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("storage"));
+    } catch {}
+
+    // 2. Database persistence: delete from Supabase
+    try {
+      const res = await deleteInvoiceAction(id);
+      if (!res.success) {
+        console.error("Failed to delete invoice from database:", res.error);
+      }
+      router.refresh();
     } catch (err) {
       console.error("Failed to delete invoice from database:", err);
     }
-    saveInvoices(invoices.filter((inv) => inv.id !== id));
-    setDeleteConfirmId(null);
-    showToast("Facture supprimée.");
   };
 
   const filteredInvoices = invoices.filter((inv) => {

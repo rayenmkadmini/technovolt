@@ -2,6 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminUsersClient, UserItem } from "./AdminUsersClient";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminUsersPage({
   params,
 }: {
