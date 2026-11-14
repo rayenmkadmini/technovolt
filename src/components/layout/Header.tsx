@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -92,8 +92,9 @@ export function Header() {
               className="relative h-10 w-44 sm:h-12 sm:w-52 overflow-hidden flex items-center"
               style={{ position: "relative" }}
             >
-              <Image
+              <OptimizedImage
                 src={customLogo}
+                variant="thumbnail"
                 alt="TECHNOVOLT Logo"
                 fill
                 unoptimized

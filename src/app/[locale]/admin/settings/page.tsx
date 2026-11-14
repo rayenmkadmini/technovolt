@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { defaultCompanySettings } from "@/lib/data/initialData";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -97,6 +97,9 @@ export default function AdminSettingsPage() {
       setLogoError("Le fichier est trop volumineux. La taille maximale autorisée est de 5 Mo.");
       return;
     }
+    if (logoPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(logoPreview);
+    }
     setLogoFile(file);
     try {
       setLogoPreview(URL.createObjectURL(file));
@@ -157,6 +160,9 @@ export default function AdminSettingsPage() {
         fd.append("folder", "Branding");
         fd.append("altFr", "Logo TECHNOVOLT");
         const res = await uploadMediaAction(fd);
+        if (!res.success || !res.data?.url) {
+          throw new Error(res.error || "Échec du téléversement du logo.");
+        }
         if (res.success && res.data?.url) {
           finalLogoUrl = res.data.url;
         }
@@ -165,6 +171,9 @@ export default function AdminSettingsPage() {
       await updateCompanySettingsAction({ logo_url: finalLogoUrl });
       localStorage.setItem("technovolt_company_logo", finalLogoUrl);
       setLogoUrl(finalLogoUrl);
+      if (logoPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(logoPreview);
+      }
       setLogoFile(null);
       setLogoPreview(null);
       setLogoSaved(true);
@@ -183,6 +192,9 @@ export default function AdminSettingsPage() {
       await updateCompanySettingsAction({ logo_url: "/logo.png" });
       localStorage.removeItem("technovolt_company_logo");
       setLogoUrl("/logo.png");
+      if (logoPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(logoPreview);
+      }
       setLogoFile(null);
       setLogoPreview(null);
       setLogoSaved(true);
@@ -293,8 +305,9 @@ export default function AdminSettingsPage() {
             </label>
             <div className="h-28 rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center justify-center relative overflow-hidden">
               <div className="relative h-16 w-52">
-                <Image
+                <OptimizedImage
                   src={logoUrl}
+                  variant="thumbnail"
                   alt="Logo TECHNOVOLT"
                   fill
                   unoptimized
@@ -370,8 +383,9 @@ export default function AdminSettingsPage() {
               <div className="p-3 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="relative h-10 w-24 rounded bg-white p-1 border border-slate-200">
-                    <Image
+                    <OptimizedImage
                       src={logoPreview}
+                      variant="thumbnail"
                       alt="Aperçu logo"
                       fill
                       unoptimized
@@ -389,7 +403,16 @@ export default function AdminSettingsPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setLogoPreview(null)}
+                    onClick={() => {
+                      if (logoPreview?.startsWith("blob:")) {
+                        URL.revokeObjectURL(logoPreview);
+                      }
+                      if (logoPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(logoPreview);
+      }
+      setLogoFile(null);
+                      setLogoPreview(null);
+                    }}
                     className="text-xs h-8"
                   >
                     Annuler

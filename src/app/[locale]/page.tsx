@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { getServices, getProjects, getCompanySettings } from "@/lib/data/services";
@@ -150,8 +150,9 @@ export default async function HomePage({
                     className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-900"
                     style={{ position: "relative" }}
                   >
-                    <Image
+                    <OptimizedImage
                       src="/images/projects/technovolt-chantier-01.jpg"
+                      variant="standard"
                       alt="TECHNOVOLT Électricité générale et domotique"
                       fill
                       priority
@@ -161,8 +162,9 @@ export default async function HomePage({
                     {/* Floating Brand Logo Badge */}
                     <div className="absolute top-4 start-4 rounded-xl bg-white/95 backdrop-blur-md px-4 py-2 shadow-lg border border-white/40 flex items-center">
                       <div className="relative h-7 w-32" style={{ position: "relative" }}>
-                        <Image
+                        <OptimizedImage
                           src="/logo.png"
+                          variant="thumbnail"
                           alt="TECHNOVOLT"
                           fill
                           sizes="128px"
@@ -238,8 +240,9 @@ export default async function HomePage({
                   className="lg:col-span-6 relative aspect-[16/10] lg:aspect-auto overflow-hidden bg-slate-900"
                   style={{ position: "relative" }}
                 >
-                  <Image
+                  <OptimizedImage
                     src={services[0].cover_image}
+                    variant="large"
                     alt={services[0].title || "Installation Électrique TECHNOVOLT"}
                     fill
                     priority
@@ -336,8 +339,9 @@ export default async function HomePage({
                       className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-100"
                       style={{ position: "relative" }}
                     >
-                      <Image
+                      <OptimizedImage
                         src={service.cover_image}
+                        variant="card"
                         alt={service.title || "Service"}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
@@ -549,8 +553,9 @@ export default async function HomePage({
                     className="relative aspect-[16/10] overflow-hidden bg-slate-100"
                     style={{ position: "relative" }}
                   >
-                    <Image
+                    <OptimizedImage
                       src={proj.cover_image}
+                      variant="card"
                       alt={proj.title || "Projet TECHNOVOLT"}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"

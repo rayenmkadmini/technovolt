@@ -1,6 +1,18 @@
 "use server";
 
+import crypto from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireMediaAdmin } from "@/lib/auth/adminAuth";
+import { headR2Object, isR2Configured, putR2Object } from "@/lib/storage/r2";
+import {
+  computeSha256Hex,
+  generateSafeObjectKey,
+  sanitizeMediaFolder,
+  sanitizeOriginalFilename,
+  validateImageMagicBytes,
+  validateUploadRequest,
+} from "@/lib/storage/validation";
+import { buildCloudflareImageUrl } from "@/lib/media/imageUrl";
 import { revalidatePath } from "next/cache";
 
 // --- CUSTOMERS ---
@@ -1221,6 +1233,11 @@ export async function updateCompanySettingsAction(settings: Record<string, any>)
 // --- MEDIA UPLOAD ---
 export async function uploadMediaAction(formData: FormData) {
   try {
+    const auth = await requireMediaAdmin();
+    if (!auth.authorized) {
+      return { success: false, error: auth.error || "Accès non autorisé." };
+    }
+
     const file = formData.get("file") as File;
     const folder = (formData.get("folder") as string) || "Chantiers";
     const altFr = (formData.get("altFr") as string) || "";
@@ -1229,57 +1246,185 @@ export async function uploadMediaAction(formData: FormData) {
       return { success: false, error: "Aucun fichier fourni." };
     }
 
-    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
-    if (!validTypes.includes(file.type)) {
-      return { success: false, error: "Type de fichier non supporté. Utilisez PNG, JPG, WebP ou SVG." };
+    const validation = validateUploadRequest({
+      filename: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      folder,
+    });
+
+    if (!validation.valid || !validation.normalizedMime || !validation.extension) {
+      return { success: false, error: validation.error || "Fichier invalide." };
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      return { success: false, error: "Le fichier dépasse la taille maximale autorisée de 5 Mo." };
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const magicCheck = validateImageMagicBytes(buffer, validation.normalizedMime);
+    if (!magicCheck.valid) {
+      return { success: false, error: magicCheck.error || "Contenu d'image invalide." };
     }
 
+    const sanitizedName = validation.sanitizedFilename || sanitizeOriginalFilename(file.name);
+    const safeFolder = validation.folder || sanitizeMediaFolder(folder);
+    const checksumHex = computeSha256Hex(buffer);
+    const checksumBase64 = crypto.createHash("sha256").update(buffer).digest("base64");
     const supabase = createAdminClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const safeName = `${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}.${ext}`;
-    const filePath = `${folder.toLowerCase()}/${safeName}`;
 
-    let publicUrl = `/images/projects/${safeName}`;
+    const { data: existingDup } = await supabase
+      .from("media_assets")
+      .select("*")
+      .eq("checksum_sha256", checksumHex)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
 
-    try {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const bucketName = "media";
-      const { data: uploadData, error: uploadErr } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, buffer, {
-          contentType: file.type,
-          upsert: true,
-        });
-
-      if (!uploadErr && uploadData) {
-        const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
-        if (urlData?.publicUrl) {
-          publicUrl = urlData.publicUrl;
-        }
-      }
-    } catch (storageErr) {
-      console.warn("Supabase storage upload fallback:", storageErr);
+    if (existingDup) {
+      const existingUrl = existingDup.public_url || existingDup.file_url;
+      return {
+        success: true,
+        duplicate: true,
+        data: {
+          id: existingDup.id,
+          name: existingDup.original_filename || existingDup.file_name,
+          url: existingUrl,
+          thumbnailUrl: buildCloudflareImageUrl(existingUrl, "thumbnail"),
+          size: Math.round((existingDup.size_bytes || file.size) / 1024) + " KB",
+          folder: existingDup.folder || folder,
+          altTextFr: existingDup.alt_text_fr || altFr || sanitizedName,
+          altTextAr: existingDup.alt_text_ar || "",
+          uploadedAt: (existingDup.created_at || new Date().toISOString()).slice(0, 10),
+        },
+      };
     }
+
+    if (isR2Configured()) {
+      const objectKey = generateSafeObjectKey({
+        folder: safeFolder,
+        extension: validation.extension,
+      });
+
+      const uploaded = await putR2Object({
+        objectKey,
+        body: buffer,
+        contentType: validation.normalizedMime,
+        originalFilename: sanitizedName,
+        checksumSha256Base64: checksumBase64,
+      });
+
+      const head = await headR2Object(objectKey);
+      if (!head.exists) {
+        return { success: false, error: "La vérification de l'objet dans Cloudflare R2 a échoué." };
+      }
+
+      const { data: inserted, error: insertErr } = await supabase
+        .from("media_assets")
+        .insert({
+          file_name: sanitizedName,
+          original_filename: sanitizedName,
+          file_path: objectKey,
+          object_key: objectKey,
+          file_url: uploaded.publicUrl,
+          public_url: uploaded.publicUrl,
+          file_type: "image",
+          mime_type: validation.normalizedMime,
+          file_size: buffer.byteLength,
+          size_bytes: buffer.byteLength,
+          alt_text_fr: altFr.trim() || sanitizedName,
+          alt_text_ar: "",
+          folder: safeFolder,
+          category: safeFolder,
+          storage_provider: "r2",
+          migration_status: "native_r2",
+          checksum_sha256: checksumHex,
+          uploaded_by: auth.userId || null,
+          is_public: true,
+        })
+        .select()
+        .single();
+
+      if (insertErr) throw insertErr;
+
+      return {
+        success: true,
+        data: {
+          id: inserted.id,
+          name: sanitizedName,
+          url: uploaded.publicUrl,
+          thumbnailUrl: buildCloudflareImageUrl(uploaded.publicUrl, "thumbnail"),
+          size: Math.round(buffer.byteLength / 1024) + " KB",
+          folder: safeFolder,
+          altTextFr: inserted.alt_text_fr || sanitizedName,
+          altTextAr: inserted.alt_text_ar || "",
+          uploadedAt: new Date().toISOString().slice(0, 10),
+        },
+      };
+    }
+
+    // Transitional fallback: Supabase Storage when R2 env vars are not yet configured
+    const legacyPath = `${safeFolder}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${validation.extension}`;
+    const bucketName = "media";
+    const { data: uploadData, error: uploadErr } = await supabase.storage
+      .from(bucketName)
+      .upload(legacyPath, buffer, {
+        contentType: validation.normalizedMime,
+        upsert: false,
+      });
+
+    if (uploadErr || !uploadData) {
+      return {
+        success: false,
+        error: uploadErr?.message || "Échec du téléversement (R2 non configuré et Supabase Storage indisponible).",
+      };
+    }
+
+    const { data: urlData } = supabase.storage.from(bucketName).getPublicUrl(legacyPath);
+    const publicUrl = urlData?.publicUrl;
+    if (!publicUrl) {
+      return { success: false, error: "URL publique introuvable après téléversement." };
+    }
+
+    const { data: inserted } = await supabase
+      .from("media_assets")
+      .insert({
+        file_name: sanitizedName,
+        original_filename: sanitizedName,
+        file_path: legacyPath,
+        file_url: publicUrl,
+        public_url: publicUrl,
+        legacy_storage_path: legacyPath,
+        legacy_public_url: publicUrl,
+        legacy_bucket: bucketName,
+        file_type: "image",
+        mime_type: validation.normalizedMime,
+        file_size: buffer.byteLength,
+        size_bytes: buffer.byteLength,
+        alt_text_fr: altFr.trim() || sanitizedName,
+        alt_text_ar: "",
+        folder: safeFolder,
+        category: safeFolder,
+        storage_provider: "supabase",
+        migration_status: "legacy",
+        checksum_sha256: checksumHex,
+        uploaded_by: auth.userId || null,
+        is_public: true,
+      })
+      .select()
+      .maybeSingle();
 
     return {
       success: true,
       data: {
-        id: `med-${Date.now()}`,
-        name: file.name,
+        id: inserted?.id || `med-${Date.now()}`,
+        name: sanitizedName,
         url: publicUrl,
-        size: Math.round(file.size / 1024) + " KB",
-        folder,
-        altTextFr: altFr || file.name,
+        size: Math.round(buffer.byteLength / 1024) + " KB",
+        folder: safeFolder,
+        altTextFr: altFr.trim() || sanitizedName,
         altTextAr: "",
         uploadedAt: new Date().toISOString().slice(0, 10),
       },
     };
   } catch (err: any) {
-    console.error("uploadMediaAction error:", err);
-    return { success: false, error: err.message || "Erreur lors du téléversement du média" };
+    console.error("uploadMediaAction error:", err?.message || "unknown");
+    return { success: false, error: err?.message || "Erreur lors du téléversement du média" };
   }
 }

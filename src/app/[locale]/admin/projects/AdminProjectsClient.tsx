@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ALL_CHANTIER_PHOTOS } from "@/lib/data/galleryPhotos";
@@ -307,8 +307,9 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
           >
             <div>
               <div className="relative aspect-[16/10] bg-slate-900 overflow-hidden">
-                <Image
+                <OptimizedImage
                   src={proj.cover_image}
+                  variant="card"
                   alt={proj.title}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -508,8 +509,9 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
 
                 <div className="flex items-center gap-3">
                   <div className="relative h-16 w-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 shrink-0">
-                    <Image
+                    <OptimizedImage
                       src={formCoverImage}
+                      variant="thumbnail"
                       alt="Prévisualisation"
                       fill
                       className="object-cover"
@@ -596,8 +598,9 @@ export function AdminProjectsClient({ initialProjects }: AdminProjectsClientProp
                       : "border-slate-200 hover:border-slate-400"
                   }`}
                 >
-                  <Image
+                  <OptimizedImage
                     src={photo.src}
+                    variant="thumbnail"
                     alt={photo.title}
                     fill
                     sizes="120px"

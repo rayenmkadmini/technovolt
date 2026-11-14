@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { createClient } from "@/lib/supabase/client";
@@ -190,8 +190,9 @@ export default function AdminLayout({
               className="relative h-9 w-36 overflow-hidden rounded bg-white px-2 py-1 flex items-center shadow-xs"
               style={{ position: "relative" }}
             >
-              <Image
+              <OptimizedImage
                 src={customLogo}
+                variant="thumbnail"
                 alt="TECHNOVOLT Admin"
                 fill
                 unoptimized

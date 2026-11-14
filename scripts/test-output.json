@@ -1,0 +1,38 @@
+{
+  "testStartedAt": "2026-11-14T13:24:58.051Z",
+  "steps": {
+    "upload": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "etag": "93ca32a536da1698ea979f183679af29",
+      "objectKey": "media/__r2_live_tests/test-probe-b13661f1-beb6-4b22-8e3d-eb93de206db0.png",
+      "contentLength": 67,
+      "contentType": "image/png"
+    },
+    "publicDelivery": {
+      "status": "PASS",
+      "httpStatus": 200,
+      "publicUrl": "https://media.technovolt.tn/media/__r2_live_tests/test-probe-b13661f1-beb6-4b22-8e3d-eb93de206db0.png",
+      "contentType": "image/png",
+      "contentLength": 67,
+      "sha256Matched": true,
+      "accessControlAllowOrigin": "https://technovolt.tn"
+    },
+    "supabase": {
+      "status": "PASS",
+      "assetId": "de7f17f5-daeb-4e6b-887e-7e87b143ff12",
+      "triggerVerified": true,
+      "rlsVerified": true,
+      "initialUpdatedAt": "2026-11-14T13:24:59.031614+00:00",
+      "modifiedUpdatedAt": "2026-11-14T13:25:00.232076+00:00"
+    },
+    "deletion": {
+      "status": "PASS",
+      "softDeleteVerified": true,
+      "anonRlsHidden": true,
+      "r2ObjectPurged": true,
+      "databaseRowCleaned": true
+    }
+  },
+  "passedAll": true
+}

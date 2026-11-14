@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { getProjects } from "@/lib/data/services";
@@ -73,8 +73,9 @@ export default async function ProjectsPage({
                     className="relative aspect-[16/10] overflow-hidden bg-slate-900"
                     style={{ position: "relative" }}
                   >
-                    <Image
+                    <OptimizedImage
                       src={proj.cover_image}
+                      variant="card"
                       alt={proj.title || "Projet TECHNOVOLT"}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"

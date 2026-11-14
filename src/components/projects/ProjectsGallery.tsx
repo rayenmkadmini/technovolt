@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { ALL_CHANTIER_PHOTOS } from "@/lib/data/galleryPhotos";
 import { Button } from "@/components/ui/Button";
 import {
@@ -160,8 +160,9 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
             onClick={() => setSelectedPhotoIndex(idx)}
             className="group relative aspect-square rounded-xl overflow-hidden bg-slate-900 cursor-pointer border border-slate-200 hover:border-[#0B69FF] shadow-xs hover:shadow-lg transition-all duration-300"
           >
-            <Image
+            <OptimizedImage
               src={photo.src}
+              variant="thumbnail"
               alt={photo.title}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
@@ -242,8 +243,9 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
             </button>
 
             <div className="relative w-full h-[70vh] max-h-[750px]">
-              <Image
+              <OptimizedImage
                 src={activePhoto.src}
+                variant="large"
                 alt={activePhoto.title}
                 fill
                 sizes="(max-width: 1200px) 100vw, 1200px"

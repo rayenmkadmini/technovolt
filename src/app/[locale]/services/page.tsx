@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { getServices } from "@/lib/data/services";
@@ -55,8 +55,9 @@ export default async function ServicesPage({
                   className="relative aspect-[16/10] overflow-hidden bg-slate-100"
                   style={{ position: "relative" }}
                 >
-                  <Image
+                  <OptimizedImage
                     src={service.cover_image}
+                    variant="card"
                     alt={service.title || "Service TECHNOVOLT"}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
