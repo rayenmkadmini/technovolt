@@ -24,6 +24,7 @@ export default async function AdminServicesPage({
         short_description: srv.short_description || "",
         category: srv.category || "Électricité Générale",
         service_type: srv.category || "Prestation",
+        cover_image: srv.cover_image || "/images/services/tableau-electrique.jpg",
         price_from: srv.price_from ? Number(srv.price_from) : undefined,
         show_price: Boolean(srv.show_price),
         estimated_duration: srv.estimated_duration || "2-4 heures",

@@ -26,6 +26,7 @@ export interface ServiceItem {
   short_description: string;
   category: string;
   service_type: string;
+  cover_image?: string;
   price_from?: number;
   show_price: boolean;
   estimated_duration?: string;

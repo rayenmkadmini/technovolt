@@ -9,6 +9,8 @@ import {
   ArrowUpRight,
   Zap,
   MessageSquare,
+  User,
+  UserPlus,
 } from "lucide-react";
 
 export function Footer() {
@@ -125,6 +127,18 @@ export function Footer() {
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </li>
+              <li className="pt-2 border-t border-slate-800">
+                <Link href="/client/login" className="hover:text-white transition-colors flex items-center gap-1.5 text-slate-300">
+                  <User className="h-3.5 w-3.5 text-[#0B69FF]" />
+                  <span>{tNav("login")}</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/client/register" className="hover:text-[#F5A623] transition-colors flex items-center gap-1.5 text-slate-300">
+                  <UserPlus className="h-3.5 w-3.5 text-[#F5A623]" />
+                  <span>{tNav("register")}</span>
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -192,12 +206,15 @@ export function Footer() {
               Nuqyan Agency
             </a>
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             <Link href="/privacy" className="hover:text-slate-200 transition-colors">
               {t("privacy")}
             </Link>
             <Link href="/terms" className="hover:text-slate-200 transition-colors">
               {t("terms")}
+            </Link>
+            <Link href="/client/login" className="text-slate-400 hover:text-white transition-colors">
+              {tNav("clientPortal")}
             </Link>
             <Link href="/admin/login" className="text-slate-400 hover:text-[#F5A623] transition-colors">
               Portail Collaborateurs

@@ -1,6 +1,7 @@
 "use client";
 
 import Image, { type ImageProps } from "next/image";
+import { useState, useEffect } from "react";
 import {
   buildCloudflareImageUrl,
   getConfiguredMediaOrigin,
@@ -56,6 +57,7 @@ function isNextImageConfiguredHost(src: string): boolean {
  * 1. Generates safe Cloudflare Images transformation URLs (`/cdn-cgi/image/...`) for R2 assets.
  * 2. Preserves legacy Supabase Storage URLs and local static assets without breaking dual-read.
  * 3. Bypasses Next.js `/_next/image` when serving Cloudflare-transformed, R2, or external legacy URLs so SSR never throws.
+ * 4. Gracefully catches loading errors and swaps in the verified fallback image.
  */
 export function OptimizedImage({
   src,
@@ -65,6 +67,7 @@ export function OptimizedImage({
   loading,
   alt,
   priority,
+  onError,
   ...rest
 }: OptimizedImageProps) {
   const safeSrc = normalizeImageSrc(src);
@@ -76,14 +79,26 @@ export function OptimizedImage({
     unoptimized || shouldBypassNextImageOptimization(transformedSrc) || isUnconfiguredRemote
   );
 
+  const [currentSrc, setCurrentSrc] = useState(transformedSrc);
+
+  useEffect(() => {
+    setCurrentSrc(transformedSrc);
+  }, [transformedSrc]);
+
   return (
     <Image
       {...rest}
       alt={alt ?? "TECHNOVOLT"}
-      src={transformedSrc}
+      src={currentSrc}
       priority={priority}
       loading={priority ? undefined : loading ?? "lazy"}
       unoptimized={bypass}
+      onError={(e) => {
+        if (currentSrc !== FALLBACK_IMAGE_SRC) {
+          setCurrentSrc(FALLBACK_IMAGE_SRC);
+        }
+        onError?.(e);
+      }}
     />
   );
 }

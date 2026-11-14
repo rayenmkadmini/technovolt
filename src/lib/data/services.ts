@@ -2,6 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { defaultServices, defaultProjects, defaultCompanySettings } from "./initialData";
 import { Service, Project, CompanySettings } from "@/types/database";
 
+const DEFAULT_SERVICE_COVERS: Record<string, string> = {
+  "installation-tableau-electrique": "/images/services/tableau-electrique.jpg",
+  "depannage-electrique-urgence": "/images/services/depannage.jpg",
+  "climatisation-installation-entretien": "/images/services/climatisation.jpg",
+  "renovation-electrique-nfc-15-100": "/images/services/renovation.jpg",
+};
+
 export async function getCompanySettings(): Promise<CompanySettings> {
   try {
     const supabase = await createClient();
@@ -50,6 +57,10 @@ export async function getServices(locale: string = "fr"): Promise<Service[]> {
 
       return {
         ...item,
+        cover_image:
+          item.cover_image ||
+          DEFAULT_SERVICE_COVERS[item.slug] ||
+          "/images/services/tableau-electrique.jpg",
         title: translation?.title || item.title || item.slug,
         short_description: translation?.short_description || item.short_description,
         full_description: translation?.full_description || item.full_description,

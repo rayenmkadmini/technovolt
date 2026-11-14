@@ -20,6 +20,139 @@ export const defaultCompanySettings: CompanySettings = {
   currency: "TND",
 };
 
-export const defaultServices: Service[] = [];
+export const defaultServices: Service[] = [
+  {
+    id: "4a053fd1-eb8c-4fd7-9628-e22877b08d9a",
+    slug: "installation-tableau-electrique",
+    title: "Installation Tableau Électrique & TGBT",
+    short_description:
+      "Pose d armoire modulaire, disjoncteurs différentiels 30mA et parafoudre conformes aux normes.",
+    full_description:
+      "Installation complète et sécurisation de tableau électrique général pour habitations et locaux professionnels à Tataouine.",
+    category: "Tableaux & Sécurité",
+    cover_image: "/images/services/tableau-electrique.jpg",
+    gallery: ["/images/services/tableau-electrique.jpg"],
+    icon: "Layers",
+    sort_order: 1,
+    is_active: true,
+    price_from: 350,
+    price_to: undefined,
+    show_price: false,
+    estimated_duration: "4-6 heures",
+    status: "published",
+    scope_of_work: [
+      "Audit préalable",
+      "Fourniture matériel",
+      "Pose certifiée",
+      "Tests et mise en service",
+    ],
+    benefits: [
+      "Garantie intervention",
+      "Devis transparent",
+      "Techniciens qualifiés",
+    ],
+    created_at: "2026-10-25T21:34:10.387899+00:00",
+    updated_at: "2026-10-25T21:34:10.387899+00:00",
+  },
+  {
+    id: "7e7a6bd5-92ef-46c3-b116-128078e022e7",
+    slug: "depannage-electrique-urgence",
+    title: "Dépannage Électrique d Urgence 24/7",
+    short_description:
+      "Diagnostic rapide de court-circuit, panne générale et rétablissement du courant en urgence.",
+    full_description:
+      "Équipe d astreinte disponible 24h/24 pour intervenir immédiatement en cas de panne de courant ou disjoncteur défectueux.",
+    category: "Dépannage Urgent",
+    cover_image: "/images/services/depannage.jpg",
+    gallery: ["/images/services/depannage.jpg"],
+    icon: "Zap",
+    sort_order: 2,
+    is_active: true,
+    price_from: 80,
+    price_to: undefined,
+    show_price: false,
+    estimated_duration: "1-2 heures",
+    status: "published",
+    scope_of_work: [
+      "Audit préalable",
+      "Fourniture matériel",
+      "Pose certifiée",
+      "Tests et mise en service",
+    ],
+    benefits: [
+      "Garantie intervention",
+      "Devis transparent",
+      "Techniciens qualifiés",
+    ],
+    created_at: "2026-10-25T21:34:11.250224+00:00",
+    updated_at: "2026-10-25T21:34:11.250224+00:00",
+  },
+  {
+    id: "a3d9ac56-a88d-4eed-b633-f85d8ec02c6e",
+    slug: "climatisation-installation-entretien",
+    title: "Installation & Recharge Climatiseur",
+    short_description:
+      "Pose unité intérieure/extérieure, tirage au vide, recharge gaz R410A / R32 et entretien complet.",
+    full_description:
+      "Solutions complètes de climatisation pour particuliers et professionnels à Tataouine garantissant un confort optimal.",
+    category: "Climatisation",
+    cover_image: "/images/services/climatisation.jpg",
+    gallery: ["/images/services/climatisation.jpg"],
+    icon: "Wind",
+    sort_order: 3,
+    is_active: true,
+    price_from: 180,
+    price_to: undefined,
+    show_price: false,
+    estimated_duration: "3-4 heures",
+    status: "published",
+    scope_of_work: [
+      "Audit préalable",
+      "Fourniture matériel",
+      "Pose certifiée",
+      "Tests et mise en service",
+    ],
+    benefits: [
+      "Garantie intervention",
+      "Devis transparent",
+      "Techniciens qualifiés",
+    ],
+    created_at: "2026-10-25T21:34:11.773174+00:00",
+    updated_at: "2026-10-25T21:34:11.773174+00:00",
+  },
+  {
+    id: "5be8931e-d751-4bad-afed-8aec5bce4fa5",
+    slug: "renovation-electrique-nfc-15-100",
+    title: "Rénovation Électrique Complète (NFC 15-100)",
+    short_description:
+      "Remplacement ancien câblage, mise à la terre, prises de sécurité et conformité stricte aux normes.",
+    full_description:
+      "Remise à neuf totale de vos installations vétustes pour sécuriser vos biens et occupants selon la norme NFC 15-100.",
+    category: "Rénovation & Conformité",
+    cover_image: "/images/services/renovation.jpg",
+    gallery: ["/images/services/renovation.jpg"],
+    icon: "ShieldCheck",
+    sort_order: 4,
+    is_active: true,
+    price_from: 650,
+    price_to: undefined,
+    show_price: false,
+    estimated_duration: "2-5 jours",
+    status: "published",
+    scope_of_work: [
+      "Audit préalable",
+      "Fourniture matériel",
+      "Pose certifiée",
+      "Tests et mise en service",
+    ],
+    benefits: [
+      "Garantie intervention",
+      "Devis transparent",
+      "Techniciens qualifiés",
+    ],
+    created_at: "2026-10-25T21:34:12.254022+00:00",
+    updated_at: "2026-10-25T21:34:12.254022+00:00",
+  },
+];
 
 export const defaultProjects: Project[] = [];

@@ -750,6 +750,7 @@ export async function createServiceAction(data: {
   show_price?: boolean;
   estimated_duration?: string;
   status?: string;
+  cover_image?: string;
 }) {
   try {
     const supabase = createAdminClient();
@@ -763,6 +764,7 @@ export async function createServiceAction(data: {
       .insert({
         slug: `${slug}-${Math.floor(100 + Math.random() * 900)}`,
         category: data.category || "Électricité Générale",
+        cover_image: data.cover_image || "/images/services/tableau-electrique.jpg",
         price_from: data.price_from || null,
         show_price: data.show_price ?? false,
         estimated_duration: data.estimated_duration || null,
