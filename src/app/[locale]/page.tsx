@@ -151,7 +151,7 @@ export default async function HomePage({
                     style={{ position: "relative" }}
                   >
                     <OptimizedImage
-                      src="/images/projects/technovolt-chantier-01.jpg"
+                      src="/media/images/technovolt-tableau-electrique-01.webp"
                       variant="standard"
                       alt="TECHNOVOLT Électricité générale et domotique"
                       fill
@@ -595,7 +595,7 @@ export default async function HomePage({
             <div className="mt-12 rounded-2xl bg-[#0B69FF] text-white p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
               <div className="space-y-2 text-center md:text-start">
                 <span className="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#F5A623] text-slate-900">
-                  {locale === "ar" ? "معرض الصور الكامل" : "74 Photos de Chantiers Réels"}
+                  {locale === "ar" ? "معرض الأعمال الميدانية (110+ صورة وفيديو)" : "Galerie Complète (110+ Photos & Vidéos Réelles)"}
                 </span>
                 <h3 className="text-xl sm:text-2xl font-bold">
                   {locale === "ar"
@@ -612,7 +612,7 @@ export default async function HomePage({
               <Link href="/projects" className="shrink-0">
                 <Button variant="secondary" size="lg" className="font-bold text-slate-900 gap-2">
                   <span>
-                    {locale === "ar" ? "فتح معرض الصور (74)" : "Ouvrir la Galerie (74 photos)"}
+                    {locale === "ar" ? "فتح المعرض الكامل (110+)" : "Ouvrir la Galerie Complète"}
                   </span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>

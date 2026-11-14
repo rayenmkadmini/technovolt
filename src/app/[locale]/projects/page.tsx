@@ -133,7 +133,7 @@ export default async function ProjectsPage({
             </div>
           </div>
 
-          {/* Interactive 74-Photo Worksite Gallery */}
+          {/* Interactive Authentic Worksite Gallery (110+ Photos & Videos) */}
           <ProjectsGallery locale={locale} />
 
           {/* Bottom CTA */}

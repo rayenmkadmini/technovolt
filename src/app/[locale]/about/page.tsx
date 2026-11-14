@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { OptimizedImage } from "@/components/media/OptimizedImage";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { Header } from "@/components/layout/Header";
@@ -12,6 +12,8 @@ import {
   MapPin,
   FileText,
   Zap,
+  Compass,
+  CheckCircle2,
 } from "lucide-react";
 
 export default async function AboutPage({
@@ -89,16 +91,19 @@ export default async function AboutPage({
                 className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 shadow-xl"
                 style={{ position: "relative" }}
               >
-                <Image
-                  src="/images/projects/technovolt-chantier-02.jpg"
+                <OptimizedImage
+                  src="/media/images/technovolt-tableau-electrique-01.webp"
+                  variant="standard"
                   alt="TECHNOVOLT Électricité générale et domotique à Tataouine"
                   fill
                   className="object-cover"
+                  priority
                 />
                 <div className="absolute top-4 start-4 rounded-xl bg-white/95 backdrop-blur-md px-4 py-2 shadow-lg border border-white/40 flex items-center">
                   <div className="relative h-7 w-32" style={{ position: "relative" }}>
-                    <Image
+                    <OptimizedImage
                       src="/logo.png"
+                      variant="thumbnail"
                       alt="TECHNOVOLT"
                       fill
                       className="object-contain"
@@ -114,6 +119,92 @@ export default async function AboutPage({
                     <h4 className="font-bold text-lg">
                       Expertise Terrain & Normes de Sécurité
                     </h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bureau d'Études & Engineering Plans Section */}
+          <div className="rounded-3xl bg-white border border-slate-200/80 p-8 sm:p-12 shadow-sm space-y-8">
+            <div className="max-w-3xl space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-[#0B69FF] text-xs font-bold uppercase tracking-wider">
+                <Compass className="h-3.5 w-3.5" />
+                <span>
+                  {locale === "ar" ? "مكتب دراسات وهندسة كهربائية" : "Bureau d'Études & Conception Technique"}
+                </span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                {locale === "ar"
+                  ? "دراسة هندسية ومخططات تنفيذية دقيقة قبل الشروع في الأشغال"
+                  : "Étude d'Ingénierie & Schémas Unifilaires Détaillés"}
+              </h2>
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
+                {locale === "ar"
+                  ? "لا نترك شيئاً للصدفة: كل مشروع يبدأ بتصميم مخطط هندسي دقيق لحساب الأحمال، موازنة الأطوار الثلاثية، وتحديد مسارات القنوات وأماكن لوحات التوزيع وفق المواصفات الفنية المعتمدة."
+                  : "Chaque chantier TECHNOVOLT débute par une étude technique rigoureuse : calcul des bilans de puissance, équilibrage des phases, dimensionnement des câbles et tracé précis des schémas d'implantation."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  {[
+                    locale === "ar"
+                      ? "رسم مخططات تنفيذية معمارية للإنارة والمآخذ والقوى الكهربائية"
+                      : "Plans d'implantation précis : éclairage architectural, prises et forces motrices",
+                    locale === "ar"
+                      ? "حساب دقيق لمقاطع النواقل وحماية الكابلات من ارتفاع درجات الحرارة"
+                      : "Dimensionnement optimal des conducteurs pour prévenir tout échauffement thermique",
+                    locale === "ar"
+                      ? "موازنة وتوزيع الأحمال الكهربائية على القواطع التفاضلية ولوحات الحماية"
+                      : "Équilibrage des charges et sélectivité totale des disjoncteurs divisionnaires",
+                    locale === "ar"
+                      ? "مطابقة تامة لكود البناء التونسي ومعايير السلامة المهنية الصارمة"
+                      : "Conformité stricte aux normes de sécurité et de réception technique",
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700 font-medium">{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4">
+                  <Link href="/quote">
+                    <Button variant="outline" size="sm" className="font-semibold text-xs border-[#0B69FF] text-[#0B69FF] hover:bg-blue-50">
+                      <span>{locale === "ar" ? "طلب دراسة مخطط لمنزلك" : "Demander l'étude de votre plan"}</span>
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-slate-900 shadow-md border border-slate-200">
+                  <OptimizedImage
+                    src="/media/images/technovolt-bureau-etudes-plan-01.webp"
+                    variant="card"
+                    alt="Schéma technique et plan unifilaire TECHNOVOLT"
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute bottom-2 start-2 end-2 bg-slate-950/80 backdrop-blur-xs px-2.5 py-1.5 rounded-lg text-[11px] text-white font-medium truncate">
+                    {locale === "ar" ? "مخطط أحادي الخط" : "Schéma d'implantation"}
+                  </div>
+                </div>
+
+                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-slate-900 shadow-md border border-slate-200">
+                  <OptimizedImage
+                    src="/media/images/technovolt-bureau-etudes-plan-02.webp"
+                    variant="card"
+                    alt="Bureau d'études TECHNOVOLT plans d'exécution"
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute bottom-2 start-2 end-2 bg-slate-950/80 backdrop-blur-xs px-2.5 py-1.5 rounded-lg text-[11px] text-white font-medium truncate">
+                    {locale === "ar" ? "دراسة هندسية مسبقة" : "Étude d'ingénierie"}
                   </div>
                 </div>
               </div>

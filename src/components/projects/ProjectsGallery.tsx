@@ -11,6 +11,8 @@ import {
   Maximize2,
   MapPin,
   Layers,
+  Play,
+  Video,
 } from "lucide-react";
 
 interface ProjectsGalleryProps {
@@ -27,10 +29,10 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
       id: "all",
       label:
         locale === "ar"
-          ? "جميع الصور (74)"
+          ? `جميع الأعمال (${ALL_CHANTIER_PHOTOS.length})`
           : locale === "en"
-          ? "All Photos (74)"
-          : "Toutes les réalisations (74)",
+          ? `All Works (${ALL_CHANTIER_PHOTOS.length})`
+          : `Toutes les réalisations (${ALL_CHANTIER_PHOTOS.length})`,
     },
     {
       id: "tableaux",
@@ -40,15 +42,6 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
           : locale === "en"
           ? "Electrical Panels"
           : "Tableaux & Armoires",
-    },
-    {
-      id: "cablage",
-      label:
-        locale === "ar"
-          ? "كابلات وتمديدات"
-          : locale === "en"
-          ? "Wiring & Conduits"
-          : "Câblage & Gaines",
     },
     {
       id: "eclairage",
@@ -67,6 +60,33 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
           : locale === "en"
           ? "Air Conditioning"
           : "Climatisation",
+    },
+    {
+      id: "cablage",
+      label:
+        locale === "ar"
+          ? "كابلات وتمديدات"
+          : locale === "en"
+          ? "Wiring & Conduits"
+          : "Câblage & Gaines",
+    },
+    {
+      id: "plans",
+      label:
+        locale === "ar"
+          ? "مخططات ودراسات"
+          : locale === "en"
+          ? "Blueprints & Engineering"
+          : "Bureau d'Études",
+    },
+    {
+      id: "videos",
+      label:
+        locale === "ar"
+          ? "فيديوهات المشاريع"
+          : locale === "en"
+          ? "Project Videos"
+          : "Vidéos Chantiers",
     },
     {
       id: "villas",
@@ -109,25 +129,25 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
             <Layers className="h-4 w-4 text-[#F5A623]" />
             <span>
               {locale === "ar"
-                ? "معرض صور الأشغال الميدانية"
+                ? "معرض صور وفيديوهات الأشغال الميدانية"
                 : locale === "en"
-                ? "On-Site Works Gallery"
-                : "Galerie Photos des Chantiers Réels"}
+                ? "On-Site Works & Videos Gallery"
+                : "Galerie Photos & Vidéos des Chantiers Réels"}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             {locale === "ar"
-              ? "74 صورة توثق جودة ودقة عملنا الميداني"
+              ? "توثيق ميداني حي لأعمال وإنجازات تكنوفولت"
               : locale === "en"
-              ? "74 Photos Showcasing Our Workmanship"
-              : "74 Photographies de nos Interventions Réelles"}
+              ? "Authentic Field Documentation of TECHNOVOLT Works"
+              : "Documentation Réelle des Travaux TECHNOVOLT sur le Terrain"}
           </h2>
           <p className="text-sm text-slate-600 mt-1 max-w-2xl">
             {locale === "ar"
-              ? "استكشف صوراً حقيقية لأعمال التركيب والتسليك والخزانات الكهربائية والتكييف المنجزة في تطاوين."
+              ? "استكشف صوراً وفيديوهات حقيقية لأعمال التركيب والتسليك والخزانات الكهربائية والتكييف والإنارة المعمارية المنجزة في تطاوين."
               : locale === "en"
-              ? "Explore authentic photos of electrical wiring, panels, lighting and AC installations in Tataouine."
-              : "Explorez nos réalisations concrètes : raccordements, armoires modulaires, passages de câbles et climatisation à Tataouine."}
+              ? "Explore authentic photos and video demonstrations of electrical wiring, panels, architectural lighting, and AC systems in Tataouine."
+              : "Explorez nos réalisations concrètes en images et vidéos : raccordements, armoires modulaires, éclairage architectural et climatisation à Tataouine."}
           </p>
         </div>
 
@@ -152,7 +172,7 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
         </div>
       </div>
 
-      {/* Photos Grid */}
+      {/* Media Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
         {displayedPhotos.map((photo, idx) => (
           <div
@@ -160,19 +180,50 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
             onClick={() => setSelectedPhotoIndex(idx)}
             className="group relative aspect-square rounded-xl overflow-hidden bg-slate-900 cursor-pointer border border-slate-200 hover:border-[#0B69FF] shadow-xs hover:shadow-lg transition-all duration-300"
           >
-            <OptimizedImage
-              src={photo.src}
-              variant="thumbnail"
-              alt={photo.title}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3">
+            {photo.type === "video" ? (
+              <div className="relative w-full h-full bg-slate-950 flex items-center justify-center">
+                {photo.posterSrc ? (
+                  <OptimizedImage
+                    src={photo.thumbnailSrc || photo.posterSrc}
+                    variant="thumbnail"
+                    alt={photo.title}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
+                    loading="lazy"
+                  />
+                ) : null}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <Play className="h-5 w-5 fill-white ms-0.5" />
+                  </div>
+                </div>
+                {photo.duration && (
+                  <div className="absolute top-2 end-2 bg-black/75 px-1.5 py-0.5 rounded text-[10px] text-white font-mono">
+                    {Math.round(photo.duration)}s
+                  </div>
+                )}
+              </div>
+            ) : (
+              <OptimizedImage
+                src={photo.thumbnailSrc || photo.src}
+                variant="thumbnail"
+                alt={photo.title}
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3 pointer-events-none">
               <div className="flex justify-end">
                 <span className="p-1 rounded bg-black/60 text-white backdrop-blur-xs">
-                  <Maximize2 className="h-3.5 w-3.5" />
+                  {photo.type === "video" ? (
+                    <Video className="h-3.5 w-3.5 text-red-400" />
+                  ) : (
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  )}
                 </span>
               </div>
               <div>
@@ -197,15 +248,15 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
             className="font-semibold text-xs border-slate-300 hover:bg-slate-100"
           >
             {locale === "ar"
-              ? `عرض المزيد من الصور (${filteredPhotos.length - visibleCount} متبقية)`
+              ? `عرض المزيد من الأعمال (${filteredPhotos.length - visibleCount} متبقية)`
               : locale === "en"
-              ? `Load More Photos (${filteredPhotos.length - visibleCount} remaining)`
-              : `Afficher plus de photos (${filteredPhotos.length - visibleCount} restantes)`}
+              ? `Load More Works (${filteredPhotos.length - visibleCount} remaining)`
+              : `Afficher plus de réalisations (${filteredPhotos.length - visibleCount} restantes)`}
           </Button>
         </div>
       )}
 
-      {/* Lightbox Modal */}
+      {/* Lightbox / Video Modal */}
       {activePhoto && selectedPhotoIndex !== null && (
         <div
           role="dialog"
@@ -232,7 +283,7 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
             </button>
           </div>
 
-          {/* Center Image with Previous / Next */}
+          {/* Center Image or Video with Previous / Next */}
           <div className="relative flex-1 flex items-center justify-center my-4 max-w-5xl mx-auto w-full">
             <button
               onClick={handlePrev}
@@ -242,16 +293,27 @@ export function ProjectsGallery({ locale }: ProjectsGalleryProps) {
               <ChevronLeft className="h-6 w-6" />
             </button>
 
-            <div className="relative w-full h-[70vh] max-h-[750px]">
-              <OptimizedImage
-                src={activePhoto.src}
-                variant="large"
-                alt={activePhoto.title}
-                fill
-                sizes="(max-width: 1200px) 100vw, 1200px"
-                className="object-contain"
-                priority
-              />
+            <div className="relative w-full h-[70vh] max-h-[750px] flex items-center justify-center">
+              {activePhoto.type === "video" ? (
+                <video
+                  src={activePhoto.src}
+                  poster={activePhoto.posterSrc}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="max-h-[70vh] max-w-full rounded-2xl shadow-2xl bg-black border border-white/10"
+                />
+              ) : (
+                <OptimizedImage
+                  src={activePhoto.src}
+                  variant="large"
+                  alt={activePhoto.title}
+                  fill
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                  className="object-contain"
+                  priority
+                />
+              )}
             </div>
 
             <button
